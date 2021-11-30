@@ -1,0 +1,5 @@
+running benchmark!
+Running loading phase!
+260822226
+Number of failed batch inserts: 0
+Done with loading phase!

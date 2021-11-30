@@ -1,0 +1,18 @@
+{"name": "operations", "weights": [171,57,1,1]}
+{"name": "write_txn_sizes", "values": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55], "weights": [0,3983035,26382018,133049,36991,4533,57526,655,714,109,421,93,240,26,24,12,23,7,15,2,11,3,6,2,9,16784,10,2,5,0,2,0,2,100,4,0,5,0,4,0,103,0,1,0,0,0,0,0,0,0,1,0,1,0,1]}
+{"name": "read_txn_sizes", "values": [1,2,3,4,5], "weights": [10,10,5,2,1]}
+{"name": "edge_types", "values": ["unique", "bidirectional", "unique_and_bidirectional", "other"], "weights": [52, 200, 20, 728]}
+{"name": "read_operation_types", "values": ["obj_read", "edge_point_read", "edge_range_read", "edge_count_read", "edge_time_read"], "weights": [475, 68, 376, 39, 0]}
+{"name": "write_operation_types", "values": ["obj_add", "obj_update", "obj_delete", "edge_add", "edge_update", "edge_delete"], "weights": [111, 214, 0, 10 380, 0]}
+{"name": "read_txn_operation_types", "values": ["obj_read", "edge_point_read"], "weights": [1, 1]}
+{"name": "read_operation_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "write_operation_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "write_txn_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "primary_shards", "weights": [94036,36224,3600,612,612,612,612,612,614,612,612,612,612,612,612,612,614,612,612,612,612,612,612,612,612,614,612,612,612,612,612,612,612,614,612,612,612,612,612,612,612,614,612,612,612,612,612,612,612,600]}
+{"name": "remote_shards", "weights": [31712,2563,1925,1722,1663,1620,1037,679,381,247,176,149,130,119,112,99,96,89,80,80,76,64,64,64,64,48,48,48,48,48,45,32,32,32,32,32,32,32,32,17,16,16,16,16,16,16,16,16,16,15]}
+{"name": "errors", "values": ["success", "fail_after_reserve", "fail_after_primary_commit", "fail_after_primary_rollback"], "weights": [1, 0, 0, 0]}
+{"name": "txn_errors", "values": ["success", "fail_after_reserve", "fail_after_primary_commit", "fail_after_primary_rollback"], "weights": [1, 0, 0, 0]}
+{"name": "operation_predicates", "values": ["write_visibility", "write_update_only", "write_version", "none"], "weights": [14, 42, 20, 924]}
+{"name": "txn_predicates", "values": ["read_visibiliy", "read_version", "write_visibility", "write_version", "none"], "weights": [0.2, 0.2, 0.2, 0.2, 0.2]}
+{"name": "txn_predicate_counts", "weights": [0.8, 0.1, 0.1]}
+{"name": "read_tiers", "values": ["client_cache", "tao", "db"], "weights": [14, 85, 1]}
