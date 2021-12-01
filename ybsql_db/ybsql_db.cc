@@ -20,8 +20,8 @@ void YsqlDB::Init() {
     ysql_conn_ = new pqxx::connection(str);
 
     // Prepare statements 
-    edge_table_ = props_->GetProperty("edge_table_", "edges2_hash");
-    object_table_ = props_->GetProperty("object_table_", "objects2_hash");
+    edge_table_ = props_->GetProperty("edge_table_", "edges");
+    object_table_ = props_->GetProperty("object_table_", "objects");
     ysql_conn_->prepare("read_object", "SELECT timestamp, value FROM " +object_table_ + " WHERE id = $1");
     ysql_conn_->prepare("read_edge", "SELECT timestamp, value FROM " + edge_table_ + " WHERE id1 = $1 AND id2 = $2 AND type = $3");
     ysql_conn_->prepare("scan_object", "SELECT id FROM " +object_table_ + " WHERE yb_hash_code(id) >= $1 AND yb_hash_code(id) < $2 LIMIT $3");

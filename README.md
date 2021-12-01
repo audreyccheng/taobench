@@ -46,9 +46,48 @@ make
 make install
 ```
 
+5. Include the directory of `libpqxx` in `CMakeLists.txt`
+
+
 Source: 
 1. https://docs.yugabyte.com/latest/quick-start/install/linux/#configure-yugabytedb
 2. https://docs.yugabyte.com/latest/quick-start/build-apps/cpp/ysql/#dependencies
+
+## Creating a local cluster
+1. Run the following command to create a single-node local cluster:
+```
+./bin/yugabyted start
+```
+
+## Creating a database
+1. Run the following command inside `/yugabyte-2.9.0.0` to enter the yugabyte shell:
+```
+./bin/ysqlsh -h 127.0.0.1 -p 5433 -U yugabyte
+```
+2. Create a database called `test`:
+```
+yugabyte=# CREATE DATABASE test;
+```
+3. Connect to the new database using the YSQL shell `\c` meta command:
+```
+yugabyte=# \c test;
+```
+
+4. Run the schema code below to create two tables `objects` and `edges`:
+```
+test=> create table objects(id varchar(63),
+                     timestamp bigint,
+                     value text,
+                     primary key(id HASH));
+
+test=> create table edges(
+       id1 varchar(63),
+       id2 varchar(63),
+       type varchar(63),
+       timestamp bigint,
+       value text,
+ primary key (id1 HASH, id2 ASC, type ASC));
+ ```
 
 ## Running Workload
 
@@ -61,5 +100,4 @@ Source:
 ```
 ./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/test.json -rows 2000000 -t -E ysql_workload1_exp/1k -threads 100 > w1.txt
 ```
-
 
