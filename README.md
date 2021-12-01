@@ -5,7 +5,7 @@
 Follow the CMake instructions on the Spanner quickstart guide (https://github.com/googleapis/google-cloud-cpp/tree/main/google/cloud/spanner/quickstart) to install the Spanner client libraries using vcpkg. Then run:
 
 ```
-cmake . -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg.cmake
+cmake -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release .
 make
 ``` 
 
