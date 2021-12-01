@@ -59,11 +59,11 @@ Source:
 1. run `make` to build
 2. load the data
 ```
-./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/workload_1.json -load -n 10,510,000 -threads 100
+./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/test.json -load -n 10000000 -threads 100
 ```
 3. run the data
 ```
-./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/workload_1.json -rows 2000000 -t -E ysql_workload1_exp/1k -threads 100 > w1.txt
+./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/test.json -rows 2000000 -t -E ysql_workload1_exp/1k -threads 100 > w1.txt
 ```
 
 
