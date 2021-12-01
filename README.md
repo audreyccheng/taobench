@@ -1,9 +1,5 @@
-# taobench
-A distributed database benchmark based on TAO's workload
 
-
-# YugabyteDB
-Switch to branch `yugabyte` to proceed. 
+# YugabyteDB 
 Here are the intructions to install yugabyteDB.
 
 ## Installing yugabyteDB

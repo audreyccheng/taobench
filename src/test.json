@@ -1,0 +1,18 @@
+{"name": "operations", "weights": [0.25, 0.25, 0.25, 0.25]}
+{"name": "write_txn_sizes", "values": [0, 1, 2, 3, 4, 5], "weights": [0, 0.2, 0.2, 0.2, 0.2, 0.2]}
+{"name": "read_txn_sizes", "values": [0, 1, 2, 3, 4, 5], "weights": [0, 0.2, 0.2, 0.2, 0.2, 0.2]}
+{"name": "edge_types", "values": ["unique", "bidirectional", "unique_and_bidirectional", "other"], "weights": [0.25, 0.25, 0.25, 0.25]}
+{"name": "read_operation_types", "values": ["obj_read", "edge_point_read", "edge_range_read", "edge_count_read", "edge_time_read"], "weights": [0.5, 0.5, 0, 0, 0]}
+{"name": "write_operation_types", "values": ["obj_add", "obj_update", "obj_delete", "edge_add", "edge_update", "edge_delete"], "weights": [0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "read_txn_operation_types", "values": ["obj_read", "edge_point_read"], "weights": [0.5, 0.5]}
+{"name": "read_operation_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "write_operation_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "write_txn_latency", "weights": [0, 0.16, 0.16, 0.17, 0.17, 0.17, 0.17]}
+{"name": "primary_shards", "weights": [0.33, 0.33, 0.34]}
+{"name": "remote_shards", "weights": [0.33, 0.33, 0.34]}
+{"name": "errors", "values": ["success", "fail_after_reserve", "fail_after_primary_commit", "fail_after_primary_rollback"], "weights": [1, 0, 0, 0]}
+{"name": "txn_errors", "values": ["success", "fail_after_reserve", "fail_after_primary_commit", "fail_after_primary_rollback"], "weights": [1, 0, 0, 0]}
+{"name": "operation_predicates", "values": ["write_visibility", "write_version", "none"], "weights": [0.2, 0.2, 0.6]}
+{"name": "txn_predicates", "values": ["read_visibiliy", "read_version", "write_visibility", "write_version", "none"], "weights": [0.2, 0.2, 0.2, 0.2, 0.2]}
+{"name": "txn_predicate_counts", "weights": [0.8, 0.1, 0.1]}
+{"name": "read_tiers", "values": ["client_cache", "tao", "db"], "weights": [0.14, 0.85, 0.01]}
