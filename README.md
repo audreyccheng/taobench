@@ -1,4 +1,4 @@
-# Running CRDB
+# Running TAOBench on CRDB
 ## Setting up CRDB
 Create a CockroachDB database.
 
