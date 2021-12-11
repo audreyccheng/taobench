@@ -1,5 +1,5 @@
 
-# YugabyteDB 
+# Running TAOBench on YugabyteDB
 Here are the intructions to install yugabyteDB.
 
 ## Installing yugabyteDB
