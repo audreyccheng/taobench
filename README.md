@@ -1,4 +1,4 @@
-# Distributed DB Benchmark
+# Running TAOBench on Spanner
 
 ## Building
 
@@ -31,8 +31,3 @@ The number of threads used per experiment is configured in the `experiments.txt`
 ``num_threads,num_ops,target_throughput``.
 
 `num_ops` and `target_throughput` can be set to very high numbers (~ 1 billion); experiments will automatically time out in a little over ten minutes, and throughput targets can instead be tweaked by the `num_threads`, which is the number of client threads making requests in parallel.
-
-
-## Info
-
-Framework based on a fork of [YCSB-C](https://github.com/ls4154/YCSB-cpp).
