@@ -1,4 +1,4 @@
-# Distributed DB Benchmark
+# Running TAOBench on TiDB 
 
 This branch was used to run experiments on TiDB. However, because TiDB exposes a MySQL interface, these instructions should work for any ordinary MySQL database in addition to TiDB.
 
@@ -34,7 +34,3 @@ Running experiments:
 In the load phase, the `-threads` parameter specifies the number of threads used for bulk loads (recommended: 2-4). For runs, `-threads` instead specifies the maximum number of threads used by any experiment listed in `experiments.txt`. The number of threads used per experiment is configured in the `experiments.txt` file. Each line of that file should be of the format:
 
 `num_threads,num_ops,target_throughput.`
-
-## Info
-
-Framework based on a fork of [YCSB-C](https://github.com/ls4154/YCSB-cpp).
