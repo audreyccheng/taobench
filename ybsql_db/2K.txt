@@ -1,1 +1,0 @@
--threads 64 -run -tp 2000 -rows 1500000 -n 100000

@@ -3,16 +3,20 @@
 #include <pqxx/pqxx>
 #include "pqxx/nontransaction"
 #include <chrono>
-
+#include <pqxx/except>
 
 namespace {
     const std::string DATABASE_STRING = "ybsql_db.string";
+
+    inline bool IsContentionMessage(std::string const & msg) {
+      return msg.find("aborted") != std::string::npos || msg.find("Restart read required") != std::string::npos || msg.find("Try again") != std::string::npos;
+  }
 };
 
 namespace benchmark {
 
 void YsqlDB::Init() {
-    //std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> lock(mu_);
 
     // Get string from "ybsql_db.properties"
     const utils::Properties &props = *props_;
@@ -38,18 +42,35 @@ void YsqlDB::Init() {
 
     // Insert
     // type: unique = 0, bidirectional = 1, unique_and_bidirectional = 2, other = 3
-    std::string insert_edge = "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS (SELECT 1 FROM " + edge_table_;
+    std::string insert_edge = "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS ";
     ysql_conn_->prepare("insert_object", "INSERT INTO " +object_table_ + " (id, timestamp, value) SELECT $1, $2, $3");
-    ysql_conn_->prepare("insert_edge_other", insert_edge + " WHERE (id1=$1 AND type=0) OR (id1=$1 AND type=2) OR (id1=$1 AND id2=$2 AND type=1) OR (id1=$2 AND id2=$1))");
-    ysql_conn_->prepare("insert_edge_bidirectional", insert_edge + " WHERE (id1=$1 AND type=0) OR (id1=$1 AND type=2) OR (id1=$1 AND id2=$2 AND type=3) OR (id1=$2 AND id2=$1 AND type=3) OR (id1=$1 AND id2=$2 AND type=0))");
-    ysql_conn_->prepare("insert_edge_unique", insert_edge + " WHERE id1=$1 OR (id1=$2 AND id2=$1))");
-    ysql_conn_->prepare("insert_edge_bi_unique", insert_edge + " WHERE id1=$1 OR (id1=$2 AND id2=$1 AND type=3) OR (id1=$2 AND id2=$1 AND type=0))");
+    //ysql_conn_->prepare("insert_edge_other", insert_edge + " (SELECT 1 FROM " + edge_table_  + " WHERE (id1=$1 AND type=0) OR (id1=$1 AND type=2) OR (id1=$1 AND id2=$2 AND type=1) OR (id1=$2 AND id2=$1))");
+    //ysql_conn_->prepare("insert_edge_bidirectional", insert_edge + " WHERE (id1=$1 AND type=0) OR (id1=$1 AND type=2) OR (id1=$1 AND id2=$2 AND type=3) OR (id1=$2 AND id2=$1 AND type=3) OR (id1=$1 AND id2=$2 AND type=0))");
+    ysql_conn_->prepare("insert_edge_other", insert_edge + 
+    " (SELECT 1 FROM " + edge_table_ + " WHERE (id1=$1 AND type IN (0, 2)) UNION ALL" + 
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$1 AND id2=$2 AND type=1) UNION ALL" +  
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$2 AND id2=$1))");
+
+    ysql_conn_->prepare("insert_edge_bidirectional", insert_edge + 
+    " (SELECT 1 FROM " + edge_table_ + " WHERE (id1=$1 AND type IN (0, 2)) UNION ALL" + 
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$1 AND id2=$2 AND type IN (0, 3)) UNION ALL" +  
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$2 AND id2=$1 AND type=3))");
+
+    ysql_conn_->prepare("insert_edge_unique", insert_edge + 
+    " (SELECT 1 FROM " + edge_table_ + " WHERE id1=$1 UNION ALL" +
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$2 AND id2=$1))");
+
+    ysql_conn_->prepare("insert_edge_bi_unique", insert_edge + 
+    " (SELECT 1 FROM " + edge_table_ + " WHERE id1=$1 UNION ALL" +
+    " SELECT 1 FROM " + edge_table_ + " WHERE (id1=$2 AND id2=$1 AND type IN (0, 3)))");
 
     // Delete
     ysql_conn_->prepare("delete_object", "DELETE FROM " +object_table_ + " WHERE id = $1 AND timestamp < $2");
     ysql_conn_->prepare("delete_edge", "DELETE FROM " + edge_table_ + " WHERE id1 = $1 AND id2 = $2 AND type = $3 AND timestamp < $4");
     // Batch Read
-    ysql_conn_->prepare("batch_read", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE ((id1, id2, type) > ($1, $2, $3) AND (id1, id2, type) < ($4, $5, $6)) LIMIT $7");
+    ysql_conn_->prepare("batch_read", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE ((id1, id2, type) > ($1, $2, $3) AND (id1, id2, type) < ($4, $5, $6)) ORDER BY id1, id2, type LIMIT $7");
+    // ysql_conn_->prepare("batch_read", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE yb_hash_code(id1, id2, type) > yb_hash_code($1::bigint, $2::bigint, $3::smallint) AND yb_hash_code(id1, id2, type) < yb_hash_code($4::bigint, $5::bigint, $6::smallint) LIMIT $7");
+    // ysql_conn_->prepare("batch_read", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE yb_hash_code(id1, id2, type) >= $1 AND yb_hash_code(id1, id2, type) <= $2 LIMIT $3");
 }
 
 void YsqlDB::Cleanup() {
@@ -59,7 +80,7 @@ void YsqlDB::Cleanup() {
 
 Status YsqlDB::Read(DataTable table, const std::vector<Field> &key, std::vector<TimestampValue> &result) {
 
-    //const std::lock_guard<std::mutex> lock(mu_);
+    const std::lock_guard<std::mutex> lock(mu_);
     // Execute SQL commands
     try {
       pqxx::nontransaction tx(*ysql_conn_);
@@ -69,11 +90,11 @@ Status YsqlDB::Read(DataTable table, const std::vector<Field> &key, std::vector<
       //   Field f((*fields)[i], (r[0][i]).as<std::string>("NULL"));
       //   result.emplace_back(f);
       // }
-      result.emplace_back((r[0][0]).as<int64_t>(), (r[0][1]).as<std::string>("NULL"));
+      result.emplace_back((r[0][0]).as<int64_t>(0), (r[0][1]).as<std::string>("NULL"));
       return Status::kOK;
     }
     catch (const std::exception &e) {
-      //std::cerr << e.what() << std::endl;
+      std::cerr << "Read failed: " << e.what() << std::endl;
       return Status::kError;
     }
 }
@@ -140,7 +161,7 @@ Status YsqlDB::Scan(DataTable table,
 
 Status YsqlDB::Update(DataTable table, const std::vector<DB::Field> &key, TimestampValue const &value) {
     
-    //const std::lock_guard<std::mutex> lock(mu_);
+    const std::lock_guard<std::mutex> lock(mu_);
     try
     {
       pqxx::nontransaction tx(*ysql_conn_);
@@ -149,7 +170,8 @@ Status YsqlDB::Update(DataTable table, const std::vector<DB::Field> &key, Timest
     }
     catch (const std::exception &e)
     {
-      //std::cerr << e.what() << std::endl;
+      std::cerr << "Update failed: " << e.what() << std::endl;
+      //return IsContentionMessage(e.what()) ? Status::kContentionError : Status::kError;
       return Status::kError;
     }
 }
@@ -170,7 +192,7 @@ pqxx::result YsqlDB::DoUpdate(pqxx::transaction_base &tx, DataTable table, const
 
 Status YsqlDB::Insert(DataTable table, const std::vector<Field> &key, const TimestampValue & timeval) {
     assert(!key.empty());
-    //const std::lock_guard<std::mutex> lock(mu_);
+    const std::lock_guard<std::mutex> lock(mu_);
     try
     {
       pqxx::nontransaction tx(*ysql_conn_);
@@ -179,8 +201,9 @@ Status YsqlDB::Insert(DataTable table, const std::vector<Field> &key, const Time
     }
     catch (const std::exception &e)
     {
-      //std::cerr << e.what() << std::endl;
-      return Status::kError;
+      std::cerr << "Insert failed: " << e.what() << std::endl;
+      return IsContentionMessage(e.what()) ? Status::kContentionError : Status::kError;
+      //return Status::kError;
     }
 }
 
@@ -223,8 +246,7 @@ Status YsqlDB::BatchInsertObjects(DataTable table,
   assert(!keys.empty());
   try {
     pqxx::nontransaction tx(*ysql_conn_);
-    std::string query;
-    query += "INSERT INTO " + object_table_ + " (id, timestamp, value) VALUES ";
+    std::string query = "INSERT INTO " + object_table_ + " (id, timestamp, value) VALUES ";
     bool is_first = true;
     for (size_t i = 0; i < keys.size(); ++i) {
       assert(keys[i].size() == 1);
@@ -298,21 +320,20 @@ Status YsqlDB::BatchRead(DataTable table,
   assert(ceil_key[0].name == "id1");
   assert(ceil_key[1].name == "id2");
   assert(ceil_key[2].name == "type");
-  const std::lock_guard<std::mutex> lock(mu_);
+  //const std::lock_guard<std::mutex> lock(mu_);
   try {
     pqxx::nontransaction tx(*ysql_conn_);
+    //std::cout << "SELECT id1, id2, type FROM " + edge_table_ + " WHERE ((id1, id2, type) > (" + std::to_string(floor_key[0].value) + ", " +  std::to_string(floor_key[1].value) + ", " + std::to_string(floor_key[2].value) + ") AND (id1, id2, type) < (" + std::to_string(ceil_key[0].value) + ", " + std::to_string(ceil_key[1].value) + ", " + std::to_string(ceil_key[2].value) + ")) LIMIT" + std::to_string(n) << std::endl;
     pqxx::result queryRes = tx.exec_prepared("batch_read", floor_key[0].value, floor_key[1].value, floor_key[2].value, ceil_key[0].value, ceil_key[1].value, ceil_key[2].value, n);
+    //pqxx::result queryRes = tx.exec_prepared("batch_read", ysql_start, ysql_end, n);
 
     int rows_found = 0;
     for (auto row : queryRes) {
-      std::vector<Field> row_result = {{"id1", (row)[0].as<int64_t>()},
-        {"id2", (row)[1].as<int64_t>()},
-        {"type", (row)[2].as<int64_t>()}};
-      result.push_back(std::move(row_result));
+      std::vector<Field> row_result = {{"id1", (row)[0].as<int64_t>(0)},
+        {"id2", (row)[1].as<int64_t>(0)},
+        {"type", (row)[2].as<int64_t>(0)}};
+      result.emplace_back(std::move(row_result));
       ++rows_found;
-    }
-    if (rows_found == 0) {
-      std::cerr << "Scan did not load any rows" << std::endl;
     }
     return Status::kOK;
   } catch (std::exception const &e) {
@@ -332,7 +353,8 @@ Status YsqlDB::Delete(DataTable table, const std::vector<Field> &key, const Time
     }
     catch (const std::exception &e)
     {
-      return Status::kError;
+      return IsContentionMessage(e.what()) ? Status::kContentionError : Status::kError;
+      //return Status::kError;
     }
 }
 
@@ -396,14 +418,14 @@ Status YsqlDB::Execute(const DB_Operation &operation,
       return Status::kNotFound;
     }
   } catch (std::exception const &e) {
-    //std::cerr << e.what() << std::endl;
+    std::cerr << e.what() << std::endl;
     return Status::kError;
   }
 }
 
 Status YsqlDB::ExecuteTransaction(const std::vector<DB_Operation> &operations,
                                   std::vector<TimestampValue> &results, bool read_only) {                     
-  std::string method = "prepared"; // hardcoded
+  std::string method = "batch"; // hardcoded
 
   if (method == "prepared") {
     return ExecuteTransactionPrepared(operations, results, read_only);
@@ -419,7 +441,7 @@ Status YsqlDB::ExecuteTransaction(const std::vector<DB_Operation> &operations,
 Status YsqlDB::ExecuteTransactionPrepared(const std::vector<DB_Operation> &operations,
                                       std::vector<TimestampValue> &results, bool read_only) {                     
   try {
-    //const std::lock_guard<std::mutex> lock(mu_);
+    const std::lock_guard<std::mutex> lock(mu_);
     pqxx::work tx(*ysql_conn_);
     
     for (const auto &operation : operations) {
@@ -474,13 +496,14 @@ Status YsqlDB::ExecuteTransactionPrepared(const std::vector<DB_Operation> &opera
           //   oneRowVector.push_back(f);
           // }
           // results.push_back(oneRowVector);
-          results.emplace_back((row[0]).as<int64_t>(), (row[1]).as<std::string>("NULL"));
+          results.emplace_back((row[0]).as<int64_t>(0), (row[1]).as<std::string>("NULL"));
         }
       }
     }
     tx.commit();
     return Status::kOK;
   } catch (std::exception const &e) {
+    std::cerr << "txn failed: " << e.what() << std::endl;
     return Status::kError;
   }
 }
@@ -513,29 +536,29 @@ Status YsqlDB::ExecuteTransactionBatch(const std::vector<DB_Operation> &operatio
         std::string readEdgeQuery = ReadBatchQuery(read_edges_ops);
         queryRes = tx.exec(readEdgeQuery);
         for (auto row : queryRes) {
-          results.emplace_back((row[0]).as<int64_t>(), (row[1]).as<std::string>("NULL"));
+          results.emplace_back((row[0]).as<int64_t>(0), (row[1]).as<std::string>("NULL"));
         }
       }     
       if (!read_object_ops.empty()) {
         std::string readObjectQuery = ReadBatchQuery(read_object_ops);
         queryRes = tx.exec(readObjectQuery);
         for (auto row : queryRes) {
-          results.emplace_back((row[0]).as<int64_t>(), (row[1]).as<std::string>("NULL"));
+          results.emplace_back((row[0]).as<int64_t>(0), (row[1]).as<std::string>("NULL"));
         }
       }
     } else {
       for (const auto &operation : operations) {
           switch (operation.operation) {
           case Operation::INSERT: {
-            insert_ops.push_back(operation);
+            insert_ops.emplace_back(operation);
           }
           break;
           case Operation::UPDATE: {
-            update_ops.push_back(operation);
+            update_ops.emplace_back(operation);
           }
           break;
           case Operation::DELETE: {
-            delete_ops.push_back(operation);
+            delete_ops.emplace_back(operation);
           }
           break;
           case Operation::SCAN: {
@@ -558,12 +581,16 @@ Status YsqlDB::ExecuteTransactionBatch(const std::vector<DB_Operation> &operatio
         std::string updateQuery = UpdateBatchQuery(update_ops);
         std::string deleteQuery = DeleteBatchQuery(delete_ops);
 
-        queryRes = tx.exec(insertQuery + updateQuery + deleteQuery);
+        queryRes = tx.exec(insertQuery);
+        queryRes = tx.exec(updateQuery);
+        queryRes = tx.exec(deleteQuery);
     }
     tx.commit();
     return Status::kOK;
   } catch (std::exception const &e) {
-    return Status::kError;
+    std::cerr << "txn failed: " << e.what() << std::endl;
+    return IsContentionMessage(e.what()) ? Status::kContentionError : Status::kError;
+    //return Status::kError;
   }
 }
 
@@ -605,13 +632,19 @@ std::string YsqlDB::InsertBatchQuery(const std::vector<DB_Operation> &insert_ops
       benchmark::EdgeType edge_type = static_cast<benchmark::EdgeType>((operation.key)[2].value);
       query += "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT " + id1 + ", " + id2 + ", " + type + ", " + timestamp + ", " + value + " WHERE NOT EXISTS ";
       if (edge_type == benchmark::EdgeType::Other) {
-        query +=  "(SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND type=0) OR (id1=" + id1 + " AND type=2) OR (id1=" + id1 + " AND id2=" + id2 + " AND type=1) OR (id1=" + id2 + " AND id2=" + id1 + "));";
+        query +=  "(SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND type IN (0, 2)) UNION ALL " +
+                  "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND id2=" + id2 + " AND type=1) UNION ALL " + 
+                  "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id2 + " AND id2=" + id1 + "));";
       } else if (edge_type == benchmark::EdgeType::Bidirectional) {
-        query += "(SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND type=0) OR (id1=" + id1 + " AND type=2) OR (id1=" + id1 + " AND id2=" + id2 + " AND type=3) OR (id1=" + id2 + " AND id2=" + id1 + " AND type=3) OR (id1=" + id1 + " AND id2=" + id2 + " AND type='0));";
+        query += "(SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND type IN (0, 2)) UNION ALL " +
+                 "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id1 + " AND id2=" + id2 + " AND type IN (0, 3)) UNION ALL " +
+                 "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id2 + " AND id2=" + id1 + " AND type=3));";
       } else if (edge_type == benchmark::EdgeType::Unique) {
-        query += "(SELECT 1 FROM " + edge_table_ + " WHERE id1=" + id1 + "OR (id1=" + id2 + " AND id2=" + id1 + ");";
+        query += "(SELECT 1 FROM " + edge_table_ + " WHERE id1=" + id1 + " UNION ALL " +
+                 "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id2 + " AND id2=" + id1 + "));";
       } else if (edge_type == benchmark::EdgeType::UniqueAndBidirectional) {
-        query += "(SELECT 1 FROM " + edge_table_ + " WHERE id1=" + id1 + " OR (id1=" + id2 + " AND id2=" + id1 + " AND type=3) OR (id1=" + id2 + " AND id2=" + id1 + " AND type=0));";
+        query += "(SELECT 1 FROM " + edge_table_ + " WHERE id1=" + id1 + " UNION ALL " +
+                 "SELECT 1 FROM " + edge_table_ + " WHERE (id1=" + id2 + " AND id2=" + id1 + " AND type IN (0, 3)));";
       }
     }
   }

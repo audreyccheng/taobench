@@ -85,7 +85,7 @@ public:
                    std::vector<DB::Field> const & floor_key,
                    std::vector<DB::Field> const & ceil_key,
                    int n, 
-                   std::vector<std::vector<DB::Field>> &key_buffer);  
+                   std::vector<std::vector<DB::Field>> &key_buffer);
 
 private:
   pqxx::connection* ysql_conn_;

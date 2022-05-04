@@ -1,4 +1,0 @@
-running benchmark!
-num rows per thread = 501
-Inputted experiments:
-Running experiment: 300 threads, 1000000 operations, 8000 ops/sec (targeted)

@@ -7,7 +7,7 @@ project(benchmark)
 include_directories(/usr/local/include)
 include_directories(src)
 include_directories(crdb)
-include_directories(spanner_db)
+#include_directories(spanner_db)
 include_directories(ybsql_db)
 link_directories(/usr/local/lib)
 file(GLOB SOURCES
@@ -23,5 +23,5 @@ file(GLOB SOURCES
 add_executable(benchmark ${SOURCES})
 target_link_libraries(benchmark -lpqxx)
 target_link_libraries(benchmark -lpq)
-target_link_libraries(benchmark google-cloud-cpp::spanner)
+#target_link_libraries(benchmark google-cloud-cpp::spanner)
 
