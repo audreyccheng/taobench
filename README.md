@@ -234,7 +234,7 @@ ybsql_db.string=host=<host>.aws.ybdb.io port=5433 dbname=test user=admin passwor
 
 Copy the CMakeLists_Yugabyte.txt over to the CMakeLists.txt
 ```
-cp CMakeLists_CRDB.txt CMakeLists.txt
+cp CMakeLists_Yugabyte.txt CMakeLists.txt
 ```
 
 Use CMake to generate build files and build application using make. In the future, only running make is necessary unless changes to CMakeLists.txt are made.
