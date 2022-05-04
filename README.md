@@ -174,101 +174,110 @@ In the load phase, the `-threads` parameter specifies the number of threads used
 # Yugabyte
 Here are the intructions to install yugabyteDB.
 
-## Installing yugabyteDB
-1. For Linux, install wget and curl:
+## Installing dependencies
+### Install CMake, Postgres and Postgres C++ libraries (libpq):
 ```
-apt install wget
-apt install curl
-```
-2. Download the YugabyteDB package using the following wget command:
-```
-wget https://downloads.yugabyte.com/releases/2.11.0.0/yugabyte-2.11.0.0-b7-linux-x86_64.tar.gz
-```
-3. Extract the package and then change directories to the YugabyteDB home:
-```
-tar xvfz yugabyte-2.11.0.0-b7-linux-x86_64.tar.gz && cd yugabyte-2.11.0.0/
-```
-4. configure YugabyteDB by running the following shell script:
-```
-./bin/post_install.sh
+sudo apt-get update
+sudo apt-get install build-essential cmake libpq-dev postgresql
+sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt install gcc-11 g++-11
 ```
 
-## Installing the libpqxx driver
-1. Prerequisite:
-
-    1. Installed YugabyteDB, and created a universe with YSQL enabled.
-    2. Have a 32-bit (x86) or 64-bit (x64) architecture machine.
-    3. Have gcc 4.1.2 or later, clang 3.4 or later installed.
-
-2. Get the source:
+### Install [libpqxx](http://pqxx.org/development/libpqxx):
+Clone the libpqxx repo
 ```
 git clone https://github.com/jtv/libpqxx.git
 ```
-
-3. Make sure that the PostgreSQL bin directory is on the command path:
+[Build](https://github.com/jtv/libpqxx/blob/master/BUILDING-configure.md) the libpqxx library:
 ```
-export PATH=$PATH:<yugabyte-install-dir>/postgres/bin
-```
-
-4. Run the following commands to build and install:
-```
-cd libpqxx
-./configure
+./configure CXX=g++-11
 make
-make install
+sudo make install
 ```
 
-5. Include the directory of `libpqxx` in `CMakeLists.txt`
+## Setting up YSQL
+Create a YSQL database.
 
+### Connecting to YSQL
+If you are using [YugabyteCloud](hhttps://cloud.yugabyte.com/login), connect to YSQL by either using command line (+ Yugabyte client installation) or connection string
 
-Source:
-1. https://docs.yugabyte.com/latest/quick-start/install/linux/#configure-yugabytedb
-2. https://docs.yugabyte.com/latest/quick-start/build-apps/cpp/ysql/#dependencies
-
-## Creating a local cluster
-1. Run the following command to create a single-node local cluster:
-```
-./bin/yugabyted start
-```
-
-## Creating a database
-1. Run the following command inside `/yugabyte-2.9.0.0` to enter the yugabyte shell:
-```
-./bin/ysqlsh -h 127.0.0.1 -p 5433 -U yugabyte
-```
-2. Create a database called `test`:
+### Setting the database schema
+Connect to the client terminal on [YugabyteCloud](hhttps://cloud.yugabyte.com/login) and create a database called `test`:
 ```
 yugabyte=# CREATE DATABASE test;
-```
-3. Connect to the new database using the YSQL shell `\c` meta command:
-```
 yugabyte=# \c test;
 ```
+Create the following tables:
+```sql
+drop table if exists objects;
+create table objects(
+	id bigint,
+	timestamp bigint,
+	value text,
+	primary key (id ASC));
+drop table if exists edges;
+create table edges(
+	id1 bigint,
+	id2 bigint,
+	type smallint,
+	timestamp bigint,
+	value text,
+	primary key (id1 ASC, id2 ASC, type ASC));
+```
 
-4. Run the schema code below to create two tables `objects` and `edges`:
+## Configuration and Build
+Copy the connection string for the YSQL database into `ybsql_db/ybsql_db.properties`. For example, using YugabyteCloud:
+```properties
+ybsql_db.string=host=<host>.aws.ybdb.io port=5433 dbname=test user=admin password=<password>
 ```
-test=> create table objects(id varchar(63),
-                     timestamp bigint,
-                     value text,
-                     primary key(id HASH));
 
-test=> create table edges(
-       id1 varchar(63),
-       id2 varchar(63),
-       type varchar(63),
-       timestamp bigint,
-       value text,
- primary key (id1 HASH, id2 ASC, type ASC));
- ```
+Copy the CMakeLists_Yugabyte.txt over to the CMakeLists.txt
+```
+cp CMakeLists_CRDB.txt CMakeLists.txt
+```
 
-## Running Workload
+Use CMake to generate build files and build application using make. In the future, only running make is necessary unless changes to CMakeLists.txt are made.
+```
+cmake .
+make
+```
 
-1. run `make` to build
-2. load the data
+Run the benchmark with
 ```
-./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/test.json -load -n 10000000 -threads 100
+./benchmark
 ```
-3. run the data
+
+## Running the Benchamark
+The benchmark runs in two phases. First, the `-load` phase is needed to populate the database with row entiries. Afterwards, the `-t` transaction phase is used to make queries against the database and benchmark performance. 
+
+### Load Phase
+Example load
 ```
-./benchmark -db ybsql -P ybsql_db/ybsql_db.properties -C src/test.json -rows 2000000 -t -E ysql_workload1_exp/1k -threads 100 > w1.txt
+./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_1.json -threads 10 -n 165000000 -load
 ```
+`-threads` controls the number of threads used for loads. `-n` indicates roughly the number of rows to insert.
+
+`KEY_POOL_FACTOR` is defined in `src/constants.h`. Additionally, `src/consants.h` defines `VALUE_SIZE_BYTES` which is the amount of data to insert into each row, and `src/workload_loader.cc` contains `WRITE_BATCH_SIZE` which defines the number of rows to batch together for each write during the load phase.
+
+### Transaction phase
+Example run
+```
+./benchmark -db ybsql -P ybsql/ybsql.properties -C src/workload_1.json -E experiment_runs.txt -t -threads 50
+```
+Transaction phases contain a bulk read at the beginning to read all the rows in the database into memory. `-threads` specifies how many threads to use for this bulk read phase, and `src/constants.h` defines `READ_BATCH_SIZE` to specify how many rows are batched together for each read. 
+
+Afterwards, the transaction phases runs a series of experiments against the database, which are defined in a text file inputted with `-E`. The file is of the format is shown below, where each line specifies a separate experiment
+```
+num_threads,total_num_operations,target_operations_per_second
+```
+
+Example experiment_runs.txt
+```
+1000,600000,1000
+1000,1200000,2000
+1000,1800000,3000
+```
+
+### Recording Results
+Latency information is outputed to a folder specified in `WriteLatencies()` inside `measurements.cc`. Changing the filename path can change where the latency information is written to.
