@@ -263,7 +263,7 @@ Example load
 ### Transaction phase
 Example run
 ```
-./benchmark -db ybsql -P ybsql/ybsql.properties -C src/workload_1.json -E experiment_runs.txt -t -threads 50
+./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_1.json -E experiment_runs.txt -t -threads 50
 ```
 Transaction phases contain a bulk read at the beginning to read all the rows in the database into memory. `-threads` specifies how many threads to use for this bulk read phase, and `src/constants.h` defines `READ_BATCH_SIZE` to specify how many rows are batched together for each read. 
 
