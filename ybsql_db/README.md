@@ -1,4 +1,5 @@
-# Running CRDB
+# Yugabyte
+Here are the intructions to install yugabyteDB.
 
 ## Installing dependencies
 ### Install CMake, Postgres and Postgres C++ libraries (libpq):
@@ -22,46 +23,50 @@ make
 sudo make install
 ```
 
-## Setting up CRDB
-Create a CockroachDB database.
+## Setting up YSQL
+Create a YSQL database.
 
-### Connecting to CRDB (Cockroach Cloud)
-If you are using [CockroachCloud](https://cockroachlabs.cloud/), click the "Connect" button in the top right corner. If you are trying to connect through a command line interface, follow the instructions in the "Command Line" tab of the Connect modal (copied below)
-- Install the CRDB Client using the CLI command listed in the first step of the instructions
-- Install the security certificate for your cluster using the second step of the instructions
-- Connect to your CRDB cluster using the CLI command listed in the third step of the instructions
-
-If you are trying to set up your machine to connect to COckroach Cloud through a program, follow the instructions for "Connection String" (copied below)
-- Install the security certificate for your cluster using the first step of the instructions
-- Note the CRDB connection string listed in the second step of the instructions. This will be used below in the "Configuration and Build" section of the README.
+### Connecting to YSQL
+If you are using [YugabyteCloud](hhttps://cloud.yugabyte.com/login), connect to YSQL by either using command line (+ Yugabyte client installation) or connection string
 
 ### Setting the database schema
+Connect to the client terminal on [YugabyteCloud](hhttps://cloud.yugabyte.com/login) and create a database called `test`:
+```
+yugabyte=# CREATE DATABASE test;
+yugabyte=# \c test;
+```
 Create the following tables:
 ```sql
 drop table if exists objects;
 create table objects(
-	id INT primary key,
-	timestamp bigint,
-	value text);
-drop table if exists edges;
-create table edges(
-	id1 INT,
-	id2 INT,
-	type INT,
+	id bigint,
 	timestamp bigint,
 	value text,
-	primary key (id1, id2, type));
+	primary key (id ASC));
+drop table if exists edges;
+create table edges(
+	id1 bigint,
+	id2 bigint,
+	type smallint,
+	timestamp bigint,
+	value text,
+	primary key (id1 ASC, id2 ASC, type ASC));
 ```
 
 ## Configuration and Build
-Copy the connection string for the CRDB database into `crdb/crdb.properties`. For example, using CockroachCloud:
+Copy the connection string for the YSQL database into `ybsql_db/ybsql_db.properties`. For example, using YugabyteCloud:
 ```properties
-crdb.connectionstring=postgresql://<username>:<password>@berkeley-benchmark-7q7.aws-us-west-2.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full&sslrootcert=/home/ubuntu/Library/CockroachCloud/certs/berkeley-benchmark-ca.crt
+ybsql_db.string=host=<host>.aws.ybdb.io port=5433 dbname=test user=admin password=<password>
+```
+
+Copy the CMakeLists_Yugabyte.txt over to the CMakeLists.txt
+```
+cp CMakeLists_Yugabyte.txt CMakeLists.txt
 ```
 
 Use CMake to generate build files and build application using make. In the future, only running make is necessary unless changes to CMakeLists.txt are made.
 ```
-cmake . -DWITH_CRDB=ON
+cmake .
 make
 ```
 
@@ -76,7 +81,7 @@ The benchmark runs in two phases. First, the `-load` phase is needed to populate
 ### Load Phase
 Example load
 ```
-./benchmark -db crdb -P crdb/crdb.properties -C src/workload_a.json -threads 200 -n 165000000 -load
+./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_a.json -threads 10 -n 165000000 -load
 ```
 `-threads` controls the number of threads used for loads. `-n` indicates roughly the number of rows to insert.
 
@@ -85,7 +90,7 @@ Example load
 ### Transaction phase
 Example run
 ```
-./benchmark -db crdb -P crdb/crdb.properties -C src/workload_a.json -E experiment_runs.txt -t -threads 32
+./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_a.json -E experiment_runs.txt -t -threads 50
 ```
 Transaction phases contain a bulk read at the beginning to read all the rows in the database into memory. `-threads` specifies how many threads to use for this bulk read phase, and `src/constants.h` defines `READ_BATCH_SIZE` to specify how many rows are batched together for each read. 
 
