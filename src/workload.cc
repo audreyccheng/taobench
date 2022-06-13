@@ -14,8 +14,8 @@
 
 namespace benchmark {
 
-  // each loader contains a map from primary shard to a list of edges;
-  // return the combined map
+  // Each loader contains a map from primary shard to a list of edges;
+  // Returns the combined map
   inline std::unordered_map<int, std::vector<Edge>> CombineKeyMaps(std::vector<std::shared_ptr<WorkloadLoader>> const & loaders)
   {
     std::unordered_map<int, std::vector<Edge>> map;
@@ -37,6 +37,7 @@ namespace benchmark {
       , edge_table(p.GetProperty("edge_table"))
       , shard_to_edges(CombineKeyMaps(loaders)) // only used in run phase
   {
+    // Check fields were loaded correctly from configs in debug mode.
     assert(config_parser.fields.find("write_txn_sizes") != config_parser.fields.end());
     assert(config_parser.fields.find("operations") != config_parser.fields.end());
     assert(config_parser.fields.find("primary_shards") != config_parser.fields.end());
@@ -68,10 +69,8 @@ namespace benchmark {
     return num_keys;
   }
 
-  // Given a spreader s, this function will return a key primary_shard:spreader1:id1 that, when 
-  // compared as a tuple to (primary_shard, spreader1, id1) in the edges table, will be 
-  // 1) Less than every single edge associated with s
-  // 2) Greater than every single edge associated with s-1, if s > 0
+  // Given a shard, this function will return a "fake key" that is smaller than every real key on the
+  // shard, but larger than any key on the previous shard.
   int64_t TraceGeneratorWorkload::GetShardStartKey(int shard) {
     if (shard < 0 || shard >= constants::NUM_SHARDS) {
       throw std::runtime_error("Invalid spreader passed to GetSpreaderPseudoStartKey");
@@ -79,10 +78,8 @@ namespace benchmark {
     return ((int64_t) shard) << 57;
   }
 
-  // Given a spreader s, this function will return a key primary_shard:spreader1:id1 that, when 
-  // compared as a tuple to (primary_shard, spreader1, id1) in the edges table, will be
-  // 1) Greater than every single edge associated with s
-  // 2) Less than every single edge associated with s + 1, if s < NUM_LOAD_SPREADERS - 1
+  // Given a shard, this function wil return a "fake key" that is larger than every real key on the
+  // shard, but smaller than any key on the next shard.
   int64_t TraceGeneratorWorkload::GetShardEndKey(int shard) {
     if (shard < 0 || shard >= constants::NUM_SHARDS) {
       throw std::runtime_error("Invalid spreader passed to GetSpreaderPseudoEndKey");
@@ -129,6 +126,7 @@ namespace benchmark {
     }
   }
 
+  // This function is used in the batch insert phase to generate an edge with new primary and remote keys.
   int TraceGeneratorWorkload::LoadRow(WorkloadLoader &loader) {
     std::uniform_int_distribution<> unif(0, constants::NUM_SHARDS-1);
     ConfigParser::LineObject & remote_shards = config_parser.fields["remote_shards"];

@@ -17,6 +17,7 @@ namespace benchmark {
     int target_throughput;
   };
 
+  // Read experiments.txt file into a vector of ExperimentInfo
   inline std::vector<ExperimentInfo> LoadExperiments(std::string const & experiment_path) {
     std::ifstream infile {experiment_path};
     std::vector<ExperimentInfo> loaded_experiments;

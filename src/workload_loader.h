@@ -7,6 +7,12 @@
 #include <unordered_map>
 
 namespace benchmark {
+
+  // WorkloadLoader is a helper class used for batch reads and batch inserts.
+  // For batch inserts, the class conducts buffered writes of objects and keys
+  // passed as input to WriteToBuffers.
+  // For batch reads, the class is responsible for reading edges that lie between
+  // start_key and end_key, exclusive.
   class WorkloadLoader {
   public:
 
@@ -27,6 +33,7 @@ namespace benchmark {
 
     bool FlushObjectBuffer();
 
+    // This is a map of all the edges loaded from a batch read.
     std::unordered_map<int, std::vector<Edge>> shard_to_edges;
 
   private:

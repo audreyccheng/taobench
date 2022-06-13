@@ -20,7 +20,6 @@
 #include "edge.h"
 
 namespace benchmark {
-// idea: get rid of thread id, randomize thread counter, and use much larger portion of timestamp
 namespace rnd {
   thread_local static std::mt19937 gen(std::random_device{}());
   thread_local static std::independent_bits_engine<std::default_random_engine,
@@ -38,14 +37,18 @@ class Workload {
   /// Called once, in the main client thread, before any operations are started.
   ///
   virtual void Init(DB &db) = 0;
+
+  // Carries out a WorkloadOperation on db.
   virtual bool DoRequest(DB &db) = 0;
 };
 
 class TraceGeneratorWorkload : public Workload {
 public:
 
+  // This constructor is used for the load (bulk insert) phase.
   TraceGeneratorWorkload(const utils::Properties &p);
 
+  // This constructor is used in the run phase; we combine the workload keypools loaded by each loader.
   TraceGeneratorWorkload(const utils::Properties &p,
                          std::vector<std::shared_ptr<WorkloadLoader>> const & loaders);
 
@@ -59,6 +62,7 @@ public:
 
 private:
 
+  // Deprecated
   void LoadToBuffers(DB& db, std::string const & primary_key,
                      std::string const & remote_key,
                      std::string const & edge_type,

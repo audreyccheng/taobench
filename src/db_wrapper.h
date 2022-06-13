@@ -11,6 +11,7 @@
 
 namespace benchmark {
 
+// Wrapper Class around DB; times and logs each Execute and ExecuteTransaction operation.
 class DBWrapper : public DB {
  public:
   DBWrapper(DB *db, Measurements *measurements) :

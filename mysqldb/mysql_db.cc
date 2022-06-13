@@ -15,23 +15,23 @@ namespace {
 
 namespace benchmark {
 
-inline std::string BuildBatchReadObjectString(const DB::DB_Operation &op) {
+inline std::string ReadObjectSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   std::string id = std::to_string(key[0].value);
   std::string object_string = "SELECT `timestamp`, `value` FROM objects WHERE id='" + id + "'";
-  return object_string + ";\n";
+  return object_string;
 }
 
-inline std::string BuildBatchReadEdgeString(const DB::DB_Operation &op) {
+inline std::string ReadEdgeSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   std::string id1 = std::to_string(key[0].value);
   std::string id2 = std::to_string(key[1].value);
   std::string type = EdgeTypeToString(static_cast<EdgeType>(key[2].value));
   std::string edge_string = "SELECT `timestamp`, `value` FROM edges WHERE id1='" + id1 + "' AND id2='" + id2 + "' AND type='" + type + "'";
-  return edge_string + ";\n";
+  return edge_string;
 }
 
-inline std::string BuildBatchInsertObjectString(const DB::DB_Operation &op) {
+inline std::string InsertObjectSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id = std::to_string(key[0].value);
@@ -39,10 +39,10 @@ inline std::string BuildBatchInsertObjectString(const DB::DB_Operation &op) {
   std::string val = timeval.value;
   std::string object_string = "INSERT INTO objects (id, timestamp, value) VALUES "
       "('" + id + "', " +  timestamp + ", '" + val + "')";  
-  return object_string + ";\n";
+  return object_string;
 }
 
-inline std::string BuildBatchInsertOtherString(const DB::DB_Operation &op) {
+inline std::string InsertOtherSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -55,10 +55,10 @@ inline std::string BuildBatchInsertOtherString(const DB::DB_Operation &op) {
   std::string other_filter = "(SELECT 1 FROM edges WHERE id1='" + id1 + "' AND type='unique' OR "
       "id1='" + id1 + "' AND type='unique_and_bidirectional' OR id1='" + id1 + "' AND id2='" + id2 + "' and type='bidirectional' "
       "OR id1='" + id1 + "' AND id2='" + id2 + "')";
-  return edge_base + other_filter + ";\n";
+  return edge_base + other_filter;
 }
 
-inline std::string BuildBatchInsertUniqueString(const DB::DB_Operation &op) {
+inline std::string InsertUniqueSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -69,10 +69,10 @@ inline std::string BuildBatchInsertUniqueString(const DB::DB_Operation &op) {
   std::string edge_base = "INSERT INTO edges (id1, id2, type, timestamp, value) "
       "SELECT '" + id1 + "', '" + id2 + "', '" + type + "', " + timestamp + ", '" + val + "' WHERE NOT EXISTS ";
   std::string unique_filter = "(SELECT 1 FROM edges WHERE id1='" + id1 + "' OR id1='" + id1 + "' AND id2='" + id2 + "')";
-  return edge_base + unique_filter + ";\n";
+  return edge_base + unique_filter;
 }
 
-inline std::string BuildBatchInsertBidirectionalString(const DB::DB_Operation &op) {
+inline std::string InsertBidrectionalSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -85,10 +85,10 @@ inline std::string BuildBatchInsertBidirectionalString(const DB::DB_Operation &o
   std::string bidirectional_filter = "(SELECT 1 FROM edges WHERE id1='" + id1 + "' AND type='unique' OR "
       "id1='" + id1 + "' AND type='unique_and_bidirectional' OR id1='" + id1 + "' AND id2='" + id2 + "' and type='other' "
       "OR id1='" + id1 + "' AND id2='" + id2 + "' AND type='other' OR id1='" + id1 + "' AND id2='" + id2 + "' AND type='unique')";
-  return edge_base + bidirectional_filter + ";\n";
+  return edge_base + bidirectional_filter;
 }
 
-inline std::string BuildBatchInsertUniqueAndBidirectionalString(const DB::DB_Operation &op) {
+inline std::string InsertUniqueAndBidirectionalSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -100,20 +100,20 @@ inline std::string BuildBatchInsertUniqueAndBidirectionalString(const DB::DB_Ope
       "SELECT '" + id1 + "', '" + id2 + "', '" + type + "', " + timestamp + ", '" + val + "' WHERE NOT EXISTS ";
   std::string unique_bi_filter = "(SELECT 1 FROM edges WHERE id1='" + id1 + "' OR id1='" + id1 + "' AND id2='" + id2 + "' "
   "AND type='other' OR id1='" + id1 + "' AND id2='" + id2 + "' AND type='unique')";
-  return edge_base + unique_bi_filter + ";\n";
+  return edge_base + unique_bi_filter;
 }
 
-inline std::string BuildBatchDeleteObjectString(const DB::DB_Operation &op) {
+inline std::string DeleteObjectSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id = std::to_string(key[0].value);
   std::string timestamp = std::to_string(timeval.timestamp);
   std::string object_string = "DELETE FROM objects where timestamp<" + timestamp + " "
     "AND id='" + id + "'";
-  return object_string + ";\n";
+  return object_string;
 }
 
-inline std::string BuildBatchDeleteEdgeString(const DB::DB_Operation &op) {
+inline std::string DeleteEdgeSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -122,10 +122,10 @@ inline std::string BuildBatchDeleteEdgeString(const DB::DB_Operation &op) {
   std::string timestamp = std::to_string(timeval.timestamp);
   std::string edge_string = "DELETE FROM edges where timestamp<" + timestamp + " "
     "AND id1='" + id1 + "' AND id2='" + id2 + "' AND type='" + type + "'";
-  return edge_string + ";\n";
+  return edge_string;
 }
 
-inline std::string BuildBatchUpdateObjectString(const DB::DB_Operation &op) {
+inline std::string UpdateObjectSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id = std::to_string(key[0].value);
@@ -133,10 +133,10 @@ inline std::string BuildBatchUpdateObjectString(const DB::DB_Operation &op) {
   std::string val = timeval.value;
   std::string object_string = "UPDATE objects SET timestamp=" + timestamp + ", value='" + val + "' WHERE "
     "timestamp<" + timestamp + " AND id='" + id + "'";
-  return object_string + ";\n";
+  return object_string;
 }
 
-inline std::string BuildBatchUpdateEdgeString(const DB::DB_Operation &op) {
+inline std::string UpdateEdgeSQL(const DB::DB_Operation &op) {
   const std::vector<DB::Field> &key = op.key;
   const DB::TimestampValue &timeval = op.time_and_value;
   std::string id1 = std::to_string(key[0].value);
@@ -146,7 +146,7 @@ inline std::string BuildBatchUpdateEdgeString(const DB::DB_Operation &op) {
   std::string val = timeval.value;
   std::string edge_string = "UPDATE edges SET timestamp=" + timestamp + ", value='" + val + "' WHERE "
       "timestamp<" + timestamp + " AND id1='" + id1 + "' AND id2='" + id2 + "' AND type='" + type + "'";
-  return edge_string + ";\n";
+  return edge_string;
 }
 
 inline PreparedStatement BuildReadObject(SuperiorMySqlpp::Connection & conn) {
@@ -227,7 +227,7 @@ MySqlDB::PreparedStatements::PreparedStatements(utils::Properties const & props)
                     props.GetProperty(DATABASE_USERNAME),
                     props.GetProperty(DATABASE_PASSWORD),
                     props.GetProperty(DATABASE_URL),
-                    std::stoi(props.GetProperty(DATABASE_PORT))}
+                    static_cast<uint16_t>(std::stoi(props.GetProperty(DATABASE_PORT)))}
   , read_object(BuildReadObject(sql_connection_))
   , read_edge(BuildReadEdge(sql_connection_))
   , insert_object(BuildInsertObject(sql_connection_))
@@ -453,8 +453,8 @@ Status MySqlDB::Insert(DataTable table, const std::vector<Field> &key,
       statement.bindParam(3, timestamp);
       statement.bindParam(4, val);
       statement.bindParam(5, id1);
-      statement.bindParam(6, id1);
-      statement.bindParam(7, id2);
+      statement.bindParam(6, id2);
+      statement.bindParam(7, id1);
       statement.bindParam(8, id1);
       statement.bindParam(9, id2);
       statement.updateParamBindings();
@@ -665,86 +665,82 @@ Status MySqlDB::Execute(const DB_Operation &operation,
 Status MySqlDB::ExecuteTransaction(const std::vector<DB_Operation> &operations,
                                    std::vector<TimestampValue> &read_buffer,
                                    bool read_only) {
-  std::string query_string = "START TRANSACTION;\n";
-  for (auto const & op : operations) {
+  auto query = statements->sql_connection_.makeQuery("START TRANSACTION; ");
+  for (auto const &op : operations) {
     switch (op.operation) {
-      case Operation::READ:
-        if (op.table == DataTable::Edges) {
-          query_string.append(BuildBatchReadEdgeString(op));
-        } else {
-          query_string.append(BuildBatchReadObjectString(op));
+    case Operation::READ:
+      if (op.table == DataTable::Edges) {
+        query << ReadEdgeSQL(op);
+      } else {
+        query << ReadObjectSQL(op);
+      }
+      break;
+    case Operation::DELETE:
+      if (op.table == DataTable::Edges) {
+        query << DeleteEdgeSQL(op);
+      } else {
+        query << DeleteObjectSQL(op);
+      }
+      break;
+    case Operation::UPDATE:
+      if (op.table == DataTable::Edges) {
+        query << UpdateEdgeSQL(op);
+      } else {
+        query << UpdateObjectSQL(op);
+      }
+      break;
+    case Operation::INSERT:
+      if (op.table == DataTable::Objects) {
+        query << InsertObjectSQL(op);
+      } else {
+        const std::string type =
+            EdgeTypeToString(static_cast<EdgeType>(op.key[2].value));
+        if (type == "other") {
+          query << InsertOtherSQL(op);
+        } else if (type == "unique") {
+          query << InsertUniqueSQL(op);
+        } else if (type == "bidirectional") {
+          query << InsertBidrectionalSQL(op);
+        } else if (type == "unique_and_bidirectional") {
+          query << InsertUniqueAndBidirectionalSQL(op);
         }
-        break;
-      case Operation::DELETE:
-        if (op.table == DataTable::Edges) {
-          query_string.append(BuildBatchDeleteEdgeString(op));
-        } else {
-          query_string.append(BuildBatchDeleteObjectString(op));
-        }
-        break;
-      case Operation::UPDATE:
-        if (op.table == DataTable::Edges) {
-          query_string.append(BuildBatchUpdateEdgeString(op));
-        } else {
-          query_string.append(BuildBatchUpdateObjectString(op));
-        }
-        break;
-      case Operation::INSERT:
-        if (op.table == DataTable::Objects) {
-          query_string.append(BuildBatchInsertObjectString(op));
-        } else {
-          const std::string type = EdgeTypeToString(static_cast<EdgeType>(op.key[2].value));
-          if (type == "other") {
-            query_string.append(BuildBatchInsertOtherString(op));
-          } else if (type == "unique") {
-            query_string.append(BuildBatchInsertUniqueString(op));
-          } else if (type == "bidirectional") {
-            query_string.append(BuildBatchInsertBidirectionalString(op));
-          } else if (type == "unique_and_bidirectional") {
-            query_string.append(BuildBatchInsertUniqueAndBidirectionalString(op));
-          }
-        }
-        break;
-      default:
-        std::cerr << "invalid operation" << std::endl;
-        return Status::kNotImplemented;
+      }
+      break;
+    default:
+      std::cerr << "invalid operation" << std::endl;
+      return Status::kNotImplemented;
     }
+    query << "; ";
   }
+  query << "COMMIT";
 
-  auto query = statements->sql_connection_.makeQuery(query_string);
   try {
     query.execute();
-    while (query.nextResult()) {
-      try {
-        auto result = query.store();
-        while (auto row = result.fetchRow()) {
-          assert(row.size() == 2);
-          int64_t timestamp = row[0];
-          std::string s = row[1].getString();
-          read_buffer.emplace_back(TimestampValue(timestamp, s));
-        }
-      } catch (SuperiorMySqlpp::SuperiorMySqlppError) {
-        // Ignore error from reading result of non-SELECT query
-      }
-    }
   } catch (SuperiorMySqlpp::MysqlInternalError e) {
     std::cerr << "transaction failed: " << e.getMysqlError() << std::endl;
+    try {
+      statements->sql_connection_.makeQuery("ROLLBACK").execute();
+    } catch (SuperiorMySqlpp::MysqlInternalError e) {
+      std::cerr << "failed to rollback: " << e.getMysqlError() << std::endl;
+    }
     if (e.getErrorCode() == 1213) {
       return Status::kContentionError;
     }
-    try {
-      statements->sql_connection_.makeQuery("ROLLBACK").execute();
-    } catch (SuperiorMySqlpp::MysqlInternalError) {
-      std::cerr << "failed to rollback" << std::endl;
-    }
     return Status::kError;
   }
 
-  try {
-    statements->sql_connection_.makeQuery("COMMIT").execute();
-  } catch (SuperiorMySqlpp::SuperiorMySqlppError) {
-    std::cerr << "failed to commit" << std::endl;
-    return Status::kError;
+  while (query.nextResult()) {
+    try {
+      auto result = query.store();
+      while (auto row = result.fetchRow()) {
+        assert(row.size() == 2);
+        int64_t timestamp = row[0];
+        std::string s = row[1].getString();
+        read_buffer.emplace_back(TimestampValue(timestamp, s));
+      }
+    } catch (SuperiorMySqlpp::LogicError) {
+      // ignore error from reading non-SELECT query
+    }
   }
   return Status::kOK;
 }
