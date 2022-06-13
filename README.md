@@ -1,5 +1,5 @@
 # TAOBench
-A distributed database benchmark based on TAO's workload.
+A distributed database benchmark based on Meta's social graph workload.
 
 ## Building & Schema Setup
 
