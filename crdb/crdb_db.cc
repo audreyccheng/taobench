@@ -31,17 +31,12 @@ void CrdbDB::Init() {
   conn_->prepare("read_edge", "SELECT timestamp, value FROM " + edge_table_ + " WHERE id1 = $1 AND id2 = $2 AND type = $3");
 
   // scan (not yet implemented)
-  // conn_->prepare("scan_object", "SELECT id FROM " + object_table_ + " WHERE id > $1 AND id < $2 ORDER BY id LIMIT $3");
-  // conn_->prepare("scan_edge", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE (id1, id2, type) > ($1, $2, $3) AND (id1, id2, type) < ($4, $5, $6) ORDER BY id1, id2, type LIMIT $7");
 
   // update
-  // conn_->prepare("scan_object", "SELECT id FROM " + object_table_ + " WHERE id > $1 ORDER BY id LIMIT $2");
-  // conn_->prepare("scan_edge", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE (id1, id2, type) > ($1, $2, $3) ORDER BY id1, id2, type LIMIT $4");
   conn_->prepare("update_object", "UPDATE " + object_table_ + " SET timestamp = $1, value = $2 WHERE id = $3 AND timestamp < $1");
   conn_->prepare("update_edge", "UPDATE " + edge_table_ + " SET timestamp = $1, value = $2 WHERE id1 = $3 AND id2 = $4 AND type = $5 AND timestamp < $1");
 
   // Insert
-  // type: unique = 0, bidirectional = 1, unique_and_bidirectional = 2, other = 3
   conn_->prepare("insert_object", "INSERT INTO " +object_table_ + " (id, timestamp, value) VALUES ($1, $2, $3)");
 
   std::string insert_edge = "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS ";
@@ -76,10 +71,6 @@ Status CrdbDB::Read(DataTable table, const std::vector<Field> & key, std::vector
 
     pqxx::result queryRes = DoRead(tx, table, key);
 
-    // for (int i = 0; i < fields->size(); i++) {
-    //   // Field f((*fields)[i], (queryRes[0][i]).as<std::string>("NULL"));
-    //   // result.emplace_back(f);
-    // }
     result.emplace_back( (queryRes[0][0]).as<int64_t>(0), (queryRes[0][1]).as<std::string>("NULL") );
 
 
@@ -103,50 +94,6 @@ pqxx::result CrdbDB::DoRead(pqxx::transaction_base &tx, const DataTable table, c
 Status CrdbDB::Scan(DataTable table, const std::vector<Field> & key, int n, std::vector<TimestampValue> &buffer) {
   return Status::kNotImplemented;
 }
-
-// Status CrdbDB::Scan(const std::string &table, const std::vector<Field> &key, int len,
-//                          const std::vector<std::string> *fields,
-//                          std::vector<std::vector<Field>> &result) {
-//   assert(fields == nullptr);
-//   std::vector<std::string> hardcoded_fields{"id1", "id2", "type"};
-//   if (fields == nullptr) {
-//     fields = &hardcoded_fields;
-//   }
-
-//   std::lock_guard<std::mutex> lock(mutex_);
-//   try {
-//     pqxx::nontransaction tx(*conn_);
-
-//     pqxx::result queryRes = DoScan(tx, table, key, len, fields);
-
-//     for (auto row : queryRes) {
-//       std::vector<Field> oneRowVector;
-//       for (int j = 0; j < fields->size(); j++) {
-//         Field f((*fields)[j], (row)[j].as<std::string>("NULL"));
-//         oneRowVector.push_back(f);
-//       }
-//       result.push_back(oneRowVector);
-//     }
-
-//     return Status::kOK;
-//   } catch (std::exception const &e) {
-//     std::cerr << e.what() << endl;
-//     return Status::kError;
-//   }
-// }
-
-// pqxx::result CrdbDB::DoScan(pqxx::transaction_base &tx, const std::string &table, const std::vector<Field> &key, int record_count,
-//                          const std::vector<std::string> *fields, const std::vector<Field> &limit) {
-//   // conn_->prepare("scan_object", "SELECT id FROM " + object_table_ + " WHERE id > $1 AND id < $2 ORDER BY id LIMIT $3");
-//   // conn_->prepare("scan_edge", "SELECT id1, id2, type FROM " + edge_table_ + " WHERE (id1, id2, type) > ($1, $2, $3) AND (id1, id2, type) < ($4, $5, $6) ORDER BY id1, id2, type LIMIT $7");
-//   if (table == object_table_) {
-//     return tx.exec_prepared("scan_object", key[0].value, limit[0].value, record_count);
-//   } else if (table == edge_table_) {
-//     return tx.exec_prepared("scan_edge", key[0].value, key[1].value, key[2].value, limit[0].value, limit[1].value, limit[2].value, record_count);
-//   } else {
-//     throw std::invalid_argument("Received unknown table");
-//   }
-// }
 
 Status CrdbDB::Update(DataTable table, const std::vector<DB::Field> &key, TimestampValue const &value)  {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -521,12 +468,7 @@ Status CrdbDB::ExecuteTransactionBatch(const std::vector<DB_Operation> &operatio
       queryRes = tx.exec(insert_query);
     }
     // else if (executionMethod == "stream") {
-    //   std::vector<DB_Operation> edge_inserts;
-    //   std::vector<DB_Operation> object_inserts;
-    //   for (const DB_Operation &operation : insert_operations) {
-    //     if operation.
-    //   }
-    //   pqxx::stream_to stream{tx, }
+    //   perform similar logic to above. I have not figured out how to do this yet
     // }
 
     // updates
@@ -606,35 +548,6 @@ std::string CrdbDB::GenerateMergedInsertQuery(const std::vector<DB_Operation> &i
   }
 
   return query;
-
-  // queryRes = DoInsert(tx, operation.table, operation.key, operation.fields);
-
-  // pqxx::result CrdbDB::DoInsert(pqxx::transaction_base &tx, const std::string &table, const std::vector<Field> &key, const std::vector<Field> &values) {
-  //   if (table == object_table_) {
-  //     return tx.exec_prepared("insert_object", key[0].value, values[0].value, values[1].value);
-  //   } else if (table == edge_table_) {
-  //     std::string type = key[2].value;
-  //     if (type == "other") {
-  //       return tx.exec_prepared("insert_edge_other", key[0].value, key[1].value, values[0].value, values[1].value);
-  //     } else if (type == "bidirectional") {
-  //       return tx.exec_prepared("insert_edge_bidirectional", key[0].value, key[1].value, values[0].value, values[1].value);
-  //     } else if (type == "unique") {
-  //       return tx.exec_prepared("insert_edge_unique", key[0].value, key[1].value, values[0].value, values[1].value);
-  //     } else if (type == "unique_and_bidirectional") {
-  //       return tx.exec_prepared("insert_edge_bi_unique", key[0].value, key[1].value, values[0].value, values[1].value);
-  //     } else {
-  //       throw std::invalid_argument("Received unknown type");
-  //     }
-  //   } else {
-  //     throw std::invalid_argument("Received unknown table");
-  //   }
-  // }
-
-  // conn_->prepare("insert_object", "INSERT INTO " + object_table_ + " (id, timestamp, value) SELECT $1, $2, $3");
-  // conn_->prepare("insert_edge_other", "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, 'other', $3, $4 WHERE NOT EXISTS (SELECT id1 AS id1, id2 AS id2, type AS type FROM " + edge_table_ +" WHERE (id1 = $1 AND type = 'unique') OR (id1 = $1 AND type='unique_and_bidirectional') OR (id1 = $1 AND id2 = $2 AND type = 'bidirectional') OR (id1 = $2 AND id2 = $1))");
-  // conn_->prepare("insert_edge_bidirectional", "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, 'bidirectional', $3, $4 WHERE NOT EXISTS (SELECT id1 AS id1, id2 AS id2, type AS type FROM " + edge_table_ +" WHERE (id1 = $1 AND type = 'unique') OR (id1 = $1 AND type='unique_and_bidirectional') OR (id1 = $1 AND id2 = $2 AND type = 'other') OR (id1 = $2 AND id2 = $1 AND type = 'other') OR (id1 = $2 AND id2 = $1 AND type = 'unique'))");
-  // conn_->prepare("insert_edge_unique", "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, 'unique', $3, $4 WHERE NOT EXISTS (SELECT id1 AS id1, id2 AS id2, type AS type FROM " + edge_table_ +" WHERE (id1 = $1) OR (id1 = $2 AND id2 = $1))");
-  // conn_->prepare("insert_edge_bi_unique", "INSERT INTO " + edge_table_ + " (id1, id2, type, timestamp, value) SELECT $1, $2, 'unique_and_bidirectional', $3, $4 WHERE NOT EXISTS (SELECT id1 AS id1, id2 AS id2, type AS type FROM " + edge_table_ +" WHERE (id1 = $1) OR (id1 = $2 AND id2 = $1 AND type = 'other') OR (id1 = $2 AND id2 = $1 AND type = 'unique'))");
 }
 
 std::string CrdbDB::GenerateMergedUpdateQuery(const std::vector<DB_Operation> &update_operations) {
@@ -650,20 +563,6 @@ std::string CrdbDB::GenerateMergedUpdateQuery(const std::vector<DB_Operation> &u
   }
 
   return query;
-
-
-  // queryRes = DoUpdate(tx, operation.table, operation.key, operation.fields);
-
-  // if (table == object_table_) {
-  //   return tx.exec_prepared("update_object", values[0].value, values[1].value, key[0].value);
-  // } else if (table == edge_table_) {
-  //   return tx.exec_prepared("update_edge", values[0].value, values[1].value, key[0].value, key[1].value, key[2].value);
-  // } else {
-  //   throw std::invalid_argument("Received unknown table");
-  // }
-
-  // conn_->prepare("update_object", "UPDATE " + object_table_ + " SET timestamp = $1, value = $2 WHERE id = $3 AND timestamp < $1");
-  // conn_->prepare("update_edge", "UPDATE " + edge_table_ + " SET timestamp = $1, value = $2 WHERE id1 = $3 AND id2 = $4 AND type = $5 AND timestamp < $1");
 }
 
 std::string CrdbDB::GenerateMergedDeleteQuery(const std::vector<DB_Operation> &delete_operations) {
@@ -679,21 +578,6 @@ std::string CrdbDB::GenerateMergedDeleteQuery(const std::vector<DB_Operation> &d
   }
 
   return query;
-
-  // queryRes = DoDelete(tx, operation.table, operation.key, operation.fields);
-
-  // pqxx::result CrdbDB::DoDelete(pqxx::transaction_base &tx, const std::string &table, const std::vector<Field> &key, const std::vector<Field> &values) {
-  //   if (table == object_table_) {
-  //     return tx.exec_prepared("delete_object", key[0].value, values[0].value);
-  //   } else if (table == edge_table_) {
-  //     return tx.exec_prepared("delete_edge", key[0].value, key[1].value, key[2].value, values[0].value);
-  //   } else {
-  //     throw std::invalid_argument("Received unknown table");
-  //   }
-  // }
-
-  // conn_->prepare("delete_object", "DELETE FROM " + object_table_ + " WHERE id = $1 AND timestamp < $2");
-  // conn_->prepare("delete_edge", "DELETE FROM " + edge_table_ + " WHERE id1 = $1 AND id2 = $2 AND type = $3 AND timestamp < $4");
 }
 
 DB *NewCrdbDB() {
