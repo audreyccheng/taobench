@@ -3,10 +3,11 @@
 ## Building TAOBench with MySQL
 You will need a distribution of `cmake` and `g++-11` to build TAOBench. Additionally, the MySQL driver relies on
 
-1. MySQL C API development files (libmysqlclient-dev) for MySQL version 5.7
+1. MySQL C API development files (libmysqlclient-dev) for MySQL version 5.7.
+   Currently, our benchmark driver doesn't support the MySQL 8.0 protocol.
 2. a [C++ wrapper](https://github.com/seznam/SuperiorMySqlpp) for the MySQL C API
 
-On Ubuntu:
+On Ubuntu 18.04:
 ```
 # TAOBench essentials
 apt-get update
