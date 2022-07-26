@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 option(WITH_CRDB OFF)
 option(WITH_MYSQL OFF)
 option(WITH_SPANNER OFF)
-option(WITH_YBSQL OFF)
+option(WITH_YUGABYTE OFF)
 
 include_directories(src)
 file(GLOB SOURCES src/*.h src/*.cc)
@@ -41,11 +41,11 @@ if(WITH_SPANNER)
   target_link_libraries(benchmark google-cloud-cpp::spanner)
 endif()
 
-if(WITH_YBSQL)
-  include_directories(ybsql_db)
+if(WITH_YUGABYTE)
+  include_directories(yugabytedb)
   target_sources(benchmark PRIVATE
-    ybsql_db/ybsql_db.h
-    ybsql_db/ybsql_db.cc)
+    yugabytedb/yugabytedb.h
+    yugabytedb/yugabytedb.cc)
   target_link_libraries(benchmark -lpqxx)
   target_link_libraries(benchmark -lpq)
 endif()

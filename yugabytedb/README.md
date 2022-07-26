@@ -54,19 +54,14 @@ create table edges(
 ```
 
 ## Configuration and Build
-Copy the connection string for the YSQL database into `ybsql_db/ybsql_db.properties`. For example, using YugabyteCloud:
+Copy the connection string for the YSQL database into `yugabytedb/yugabytedb.properties`. For example, using YugabyteCloud:
 ```properties
-ybsql_db.string=host=<host>.aws.ybdb.io port=5433 dbname=test user=admin password=<password>
-```
-
-Copy the CMakeLists_Yugabyte.txt over to the CMakeLists.txt
-```
-cp CMakeLists_Yugabyte.txt CMakeLists.txt
+yugabytedb.string=host=<host>.aws.ybdb.io port=5433 dbname=test user=admin password=<password>
 ```
 
 Use CMake to generate build files and build application using make. In the future, only running make is necessary unless changes to CMakeLists.txt are made.
 ```
-cmake .
+cmake . -DWITH_YUGABYTE=ON
 make
 ```
 
@@ -81,7 +76,7 @@ The benchmark runs in two phases. First, the `-load` phase is needed to populate
 ### Load Phase
 Example load
 ```
-./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_a.json -threads 10 -n 165000000 -load
+./benchmark -db yugabytedb -P yugabytedb/yugabytedb.properties -C src/workload_a.json -threads 10 -n 165000000 -load
 ```
 `-threads` controls the number of threads used for loads. `-n` indicates roughly the number of rows to insert.
 
@@ -90,7 +85,7 @@ Example load
 ### Transaction phase
 Example run
 ```
-./benchmark -db ybsql -P ybsql/ybsql_db.properties -C src/workload_a.json -E experiment_runs.txt -t -threads 50
+./benchmark -db yugabytedb -P yugabytedb/yugabytedb.properties -C src/workload_a.json -E experiment_runs.txt -t -threads 50
 ```
 Transaction phases contain a bulk read at the beginning to read all the rows in the database into memory. `-threads` specifies how many threads to use for this bulk read phase, and `src/constants.h` defines `READ_BATCH_SIZE` to specify how many rows are batched together for each read. 
 
