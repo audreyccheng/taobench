@@ -490,6 +490,7 @@ void RunLoadPhase(benchmark::utils::Properties & props) {
 
   std::cout << "Number of failed batch inserts: " << invalid_batch_inserts << std::endl;
   std::cout << "Done with loading phase!" << std::endl;
+  ClearDBs(dbs);
 }
 
 void RunTestWorkload(benchmark::utils::Properties & props) {
