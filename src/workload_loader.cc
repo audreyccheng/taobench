@@ -62,13 +62,12 @@ namespace benchmark {
     return id >> 57;
   }
 
-  int WorkloadLoader::LoadFromDB() {
-
+  int WorkloadLoader::BatchRead() {
     int failed_ops = 0;
     int num_read_by_thread = 0;
-    // note that the key mapped to id2 is just some placeholder value, the key mapped to id1 
-    // will already be less than (for lowest) or greater than (for highest) every 
-    // edge that this thread is supposed to load
+    // Note that the key mapped to id2 is just some placeholder value, the key
+    // mapped to id1 will already be less than (for lowest) or greater than (for
+    // highest) every edge that this thread is supposed to read.
     std::vector<DB::Field> floor = {{"id1", start_key}, {"id2", 0}, {"type", 0}};
     std::vector<DB::Field> ceiling  = {{"id1", end_key}, {"id2", 0}, {"type", 0}};
 
@@ -111,5 +110,3 @@ namespace benchmark {
     return failed_ops;
   }
 }
-
-// todo: struct for timestamp / val in db.h

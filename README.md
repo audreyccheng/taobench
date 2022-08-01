@@ -17,13 +17,13 @@ TAOBench supports running multiple experiments in a single run via a configurabl
 
 ### `src/constants.h`
 
-Other benchmark-level attributes can be tweaked in this file. In particular, different values of READ_BATCH_SIZE and WRITE_BATCH_SIZE might improve performance for bulk loads and batch reads.
+Other benchmark-level attributes can be tweaked in this file. In particular, different values of READ_BATCH_SIZE and WRITE_BATCH_SIZE might improve performance for batch inserts and batch reads.
 
 ## Running
 
-### Bulk Load
+### Batch insert
 
-This phase populates the DB tables with an initial set of edges and objects. To run the bulk load phase, use the following command:
+This phase populates the DB tables with an initial set of edges and objects. To run the batch insert phase, use the following command:
 
 ```
 ./benchmark -threads <num_threads> -db <db> -P path/to/database_properties.properties -C path/to/config.json -load -n <num_edges>
@@ -37,4 +37,4 @@ Ideal values for `num_threads` and `num_edges` will vary by database and by use-
 ./benchmark -threads <num_threads> -db <db> -P path/to/database_properties.properties -C path/to/config.json -run -E path/to/experiments.txt
 ```
 
-This command first batch-reads all the keys that were inserted in the bulk-load phase and then begins to run experiments. Here, `num_threads` specifies the number of threads used *for batch-reading, not for the experiments.* The value specified here must be less than or equal to the number of shards. 50 is the default value.
+This command first batch-reads all the keys that were inserted in the batch insert phase and then begins to run experiments. Here, `num_threads` specifies the number of threads used *for batch-reading, not for the experiments.* The value specified here must be less than or equal to the number of shards. 50 is the default value.

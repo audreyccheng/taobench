@@ -4,8 +4,6 @@
 #include "edge.h"
 #include <unordered_map>
 
-#include <unordered_map>
-
 namespace benchmark {
 
   // WorkloadLoader is a helper class used for batch reads and batch inserts.
@@ -27,13 +25,13 @@ namespace benchmark {
                        int64_t timestamp,
                        std::string const & value);
 
-    int LoadFromDB();
-
     bool FlushEdgeBuffer();
 
     bool FlushObjectBuffer();
 
-    // This is a map of all the edges loaded from a batch read.
+    int BatchRead();
+
+    // This is a map of all the edges from a batch read.
     std::unordered_map<int, std::vector<Edge>> shard_to_edges;
 
   private:

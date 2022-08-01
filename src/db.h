@@ -119,7 +119,7 @@ class DB {
 
 
   /// NOTE: this function is meant to support future SCAN operations in the workload. 
-  /// It is NOT used for batch loads. 
+  /// It is NOT used for batch reads.
   /// This function reads the @param n smallest rows greater than or equal to @param key.
   /// and writes them to @param buffer in sorted order.
   /// The timestamp/value pairs from these rows should be appended to buffer.

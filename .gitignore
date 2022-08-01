@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+**/cmake-build-debug
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/install_manifest.txt
+**/CMakeFiles/
+**/CTestTestfile.cmake
+**/Makefile
+**/benchmark
+**/*.cbp
+**/CMakeScripts
+**/compile_commands.json

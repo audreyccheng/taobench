@@ -8,7 +8,7 @@ namespace benchmark {
 
     // random offset for each thread so that the DB isn't hit by all threads at once
     std::this_thread::sleep_for(std::chrono::microseconds(std::rand() % 100000));
-    return loader->LoadFromDB();
+    return loader->BatchRead();
   }
 
   // Function run on each thread for batch inserts.

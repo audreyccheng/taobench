@@ -45,7 +45,7 @@ class Workload {
 class TraceGeneratorWorkload : public Workload {
 public:
 
-  // This constructor is used for the load (bulk insert) phase.
+  // This constructor is used for the batch insert phase.
   TraceGeneratorWorkload(const utils::Properties &p);
 
   // This constructor is used in the run phase; we combine the workload keypools loaded by each loader.

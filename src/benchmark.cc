@@ -187,7 +187,7 @@ void UsageMessage(const char *command) {
   std::cout <<
       "Usage: " << command << " [options]\n"
       "Options:\n"
-      "  -load: run the loading phase of the workload\n"
+      "  -load: run the batch insert phase of the workload\n"
       "  -t: run the transactions phase of the workload\n"
       "  -run: same as -t\n"
       "  -test: run test_workload\n"
@@ -196,12 +196,12 @@ void UsageMessage(const char *command) {
       "  -P propertyfile: load properties from the given file. Multiple files can\n"
       "                   be specified, and will be processed in the order specified\n"
       "  -C configfile: load workload config from the given file\n"
-      "  -E experimentfile: each line gives num_threads, num_ops, and target throughput for an experiment"
+      "  -E experimentfile: each line gives num_threads, num_ops, and target throughput for an experiment\n"
       "  -p name=value: specify a property to be passed to the DB and workloads\n"
       "                 multiple properties can be specified, and override any\n"
       "                 values in the propertyfile\n"
       "  -s: print status every 10 seconds (use status.interval prop to override)\n"
-      "  -n: number of edges in keypool (default: 165 million), only used for load to set load size\n"
+      "  -n: number of edges in keypool (default: 165 million) to batch insert\n"
       "  -spin: spin on waits rather than sleeping"
       << std::endl;
 }
@@ -310,11 +310,10 @@ void RunTransactions(benchmark::utils::Properties & props) {
   // Combine all loaded edges and form workload distributions
   benchmark::TraceGeneratorWorkload wl {props, loaders};
 
-  std::cout << "Number of failed batch reads: " << invalid_batch_reads << std::endl;;
-  std::cout << "finished loading!" << std::endl;
-  std::cout << "Loaded " << wl.GetNumLoadedEdges() << " edges in total" << std::endl;
+  std::cout << "Number of failed batch reads: " << invalid_batch_reads << std::endl;
+  std::cout << "Done with batch read phase!" << std::endl;
+  std::cout << "Total edges read: " << wl.GetNumLoadedEdges() << std::endl;
   ClearDBs(dbs);
-
 
   std::cout << "Sleeping after batch reads." << std::endl;
   std::this_thread::sleep_for(std::chrono::seconds(60));
@@ -339,7 +338,6 @@ void RunTransactions(benchmark::utils::Properties & props) {
   }
 
   for (benchmark::ExperimentInfo & experiment : experiments) {
-
     int num_experiment_threads = experiment.num_threads;
     long num_experiment_ops = experiment.num_ops;
     int target_throughput = experiment.target_throughput;
@@ -349,7 +347,6 @@ void RunTransactions(benchmark::utils::Properties & props) {
     }
     std::cout << "Running experiment: " << num_experiment_threads << " threads, " <<
       num_experiment_ops << " operations, " << target_throughput << " ops/sec (targeted)" << std::endl;
-
 
     std::vector<benchmark::DB *> experiment_dbs;
     for (int i = 0; i < num_experiment_threads; i++) {
@@ -435,11 +432,8 @@ void RunTransactions(benchmark::utils::Properties & props) {
   }
 }
 
-
-
-void RunLoadPhase(benchmark::utils::Properties & props) {
-
-  std::cout << "Running loading phase!" << std::endl;
+void RunBatchInsert(benchmark::utils::Properties & props) {
+  std::cout << "Running batch insert phase!" << std::endl;
   const int num_threads = std::stoi(props.GetProperty("threadcount", "1"));
 
   props.SetProperty("max_concurrent_connections", std::to_string(num_threads));
@@ -489,7 +483,7 @@ void RunLoadPhase(benchmark::utils::Properties & props) {
   }
 
   std::cout << "Number of failed batch inserts: " << invalid_batch_inserts << std::endl;
-  std::cout << "Done with loading phase!" << std::endl;
+  std::cout << "Done with batch insert phase!" << std::endl;
   ClearDBs(dbs);
 }
 
@@ -520,6 +514,6 @@ int main(const int argc, const char *argv[]) {
     } else if (test) {
       RunTestWorkload(props);
     } else {
-      RunLoadPhase(props);
+      RunBatchInsert(props);
     }
 }
