@@ -716,6 +716,19 @@ Status MySqlDB::ExecuteTransaction(const std::vector<DB_Operation> &operations,
 
   try {
     query.execute();
+    while (query.nextResult()) {
+      try {
+        auto result = query.store();
+        while (auto row = result.fetchRow()) {
+          assert(row.size() == 2);
+          int64_t timestamp = row[0];
+          std::string s = row[1].getString();
+          read_buffer.emplace_back(TimestampValue(timestamp, s));
+        }
+      } catch (SuperiorMySqlpp::LogicError) {
+        // ignore error from reading non-SELECT query
+      }
+    }
   } catch (SuperiorMySqlpp::MysqlInternalError e) {
     std::cerr << "transaction failed: " << e.getMysqlError() << std::endl;
     try {
@@ -727,20 +740,6 @@ Status MySqlDB::ExecuteTransaction(const std::vector<DB_Operation> &operations,
       return Status::kContentionError;
     }
     return Status::kError;
-  }
-
-  while (query.nextResult()) {
-    try {
-      auto result = query.store();
-      while (auto row = result.fetchRow()) {
-        assert(row.size() == 2);
-        int64_t timestamp = row[0];
-        std::string s = row[1].getString();
-        read_buffer.emplace_back(TimestampValue(timestamp, s));
-      }
-    } catch (SuperiorMySqlpp::LogicError) {
-      // ignore error from reading non-SELECT query
-    }
   }
   return Status::kOK;
 }
