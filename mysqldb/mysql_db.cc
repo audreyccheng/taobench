@@ -397,8 +397,8 @@ Status MySqlDB::Insert(DataTable table, const std::vector<Field> &key,
       statement.bindParam(6, id1);
       statement.bindParam(7, id1);
       statement.bindParam(8, id2);
-      statement.bindParam(9, id2);
-      statement.bindParam(10, id1);
+      statement.bindParam(9, id1);
+      statement.bindParam(10, id2);
       statement.updateParamBindings();
       try {
         statement.execute();
@@ -434,10 +434,10 @@ Status MySqlDB::Insert(DataTable table, const std::vector<Field> &key,
       statement.bindParam(6, id1);
       statement.bindParam(7, id1);
       statement.bindParam(8, id2);
-      statement.bindParam(9, id2);
-      statement.bindParam(10, id1);
-      statement.bindParam(11, id2);
-      statement.bindParam(12, id1);
+      statement.bindParam(9, id1);
+      statement.bindParam(10, id2);
+      statement.bindParam(11, id1);
+      statement.bindParam(12, id2);
       statement.updateParamBindings();
       try {
         statement.execute();
