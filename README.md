@@ -29,7 +29,7 @@ This phase populates the DB tables with an initial set of edges and objects. We 
 
 Ideal values for `num_threads` and `num_edges` will vary by database and by use-case, but 50 and 165,000,000 should be good starting points, respectively.
 
-## Running Experiments:
+## Running Experiments
 
 ```
 ./benchmark -threads <num_threads> -db <db> -P path/to/database_properties.properties -C path/to/config.json -run -E path/to/experiments.txt
