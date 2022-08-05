@@ -19,11 +19,9 @@ TAOBench supports running multiple experiments in a single run via a configurabl
 
 Other benchmark-level attributes can be tweaked in this file. In particular, different values of READ_BATCH_SIZE and WRITE_BATCH_SIZE might improve performance for batch inserts and batch reads.
 
-## Running
+## Prepping the Database
 
-### Batch insert
-
-This phase populates the DB tables with an initial set of edges and objects. To run the batch insert phase, use the following command:
+This phase populates the DB tables with an initial set of edges and objects. We batch insert data into the DB and batch read them into memory to be used when running experiments. To run the batch insert, use the following command:
 
 ```
 ./benchmark -threads <num_threads> -db <db> -P path/to/database_properties.properties -C path/to/config.json -load -n <num_edges>
