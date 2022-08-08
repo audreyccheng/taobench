@@ -87,6 +87,7 @@ std::string Measurements::GetStatusMsg() {
   return std::to_string(total_cnt) + msg_stream.str();
 }
 
+// TODO(jchan): This function is deprecated.
 std::string Measurements::WriteLatencies() {
   auto now = std::chrono::system_clock::now();
   auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);

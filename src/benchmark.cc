@@ -423,7 +423,6 @@ void RunTransactions(benchmark::utils::Properties & props) {
     std::cout << "Number of overtime operations excluding warmup: " << OpsCounts::overtime_ops << std::endl;
     std::cout << "Number of failed operations excluding warmup: " << OpsCounts::failed_ops << std::endl;
     std::cout << measurements.GetStatusMsg() << std::endl;
-    std::cout << measurements.WriteLatencies() << std::endl;
     std::cout << std::endl;
 
     ClearDBs(experiment_dbs);
