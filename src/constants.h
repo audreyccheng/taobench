@@ -3,9 +3,13 @@
 
 namespace benchmark {
   namespace constants {
-    // The number of logical shards. The keyspace is divided into NUM_SHARDS
-    // equally spaced key ranges. The distribution of keys across these ranges is
-    // determined by the workload configuration parameters.
+    // The number of virtual shards. The keyspace is divided into NUM_SHARDS
+    // equally spaced key ranges. The workload configuration parameters specify the
+    // frequency at which keys are sampled from each shard.
+    //
+    // Note that these shards are logical, not physical--they do not have an
+    // explicit relationship to how the underlying database stores these values.
+    // Optionally, they can be used to explicitly colocate data.
     constexpr int NUM_SHARDS = 50;
     static_assert(NUM_SHARDS < 127, "Number of shards must be less than 127 for bit-packing support.");
     
