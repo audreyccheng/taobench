@@ -37,14 +37,14 @@ DROP TABLE IF EXISTS objects;
 CREATE TABLE objects(
     id BIGINT PRIMARY KEY,
     timestamp BIGINT,
-    value CHAR(150));
+    value VARCHAR(150));
 DROP TABLE IF EXISTS edges;
 CREATE TABLE edges(
     id1 BIGINT,
     id2 BIGINT,
-    type CHAR(63),
+    type BIGINT,
     timestamp BIGINT,
-    value CHAR(150),
+    value VARCHAR(150),
     PRIMARY KEY CLUSTERED (id1, id2, type));
 ```
 
