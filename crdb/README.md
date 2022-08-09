@@ -42,14 +42,14 @@ drop table if exists objects;
 create table objects(
 	id INT primary key,
 	timestamp bigint,
-	value text);
+	value varchar(150));
 drop table if exists edges;
 create table edges(
 	id1 INT,
 	id2 INT,
 	type INT,
 	timestamp bigint,
-	value text,
+	value varchar(150)),
 	primary key (id1, id2, type));
 ```
 

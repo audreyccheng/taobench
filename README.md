@@ -5,6 +5,22 @@ A distributed database benchmark based on Meta's social graph workload.
 
 Follow the instructions in each database directory for build instructions and Schema setup.
 
+For SQL databases, TAOBench uses an `objects` and an `edges` table to represent
+TAO's graph data model:
+```sql
+CREATE TABLE objects (
+    id BIGINT PRIMARY KEY,
+    timestamp BIGINT,
+    value VARCHAR(150));
+CREATE TABLE edges (
+    id1 BIGINT,
+    id2 BIGINT,
+    type BIGINT,
+    timestamp BIGINT,
+    value VARCHAR(150),
+    PRIMARY KEY CLUSTERED (id1, id2, type));
+```
+
 ## Configuration
 
 ### `experiments.txt` file:

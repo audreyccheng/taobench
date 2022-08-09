@@ -41,7 +41,7 @@ drop table if exists objects;
 create table objects(
 	id bigint,
 	timestamp bigint,
-	value text,
+	value varchar(150),
 	primary key (id ASC));
 drop table if exists edges;
 create table edges(
@@ -49,7 +49,7 @@ create table edges(
 	id2 bigint,
 	type smallint,
 	timestamp bigint,
-	value text,
+	value varchar(150),
 	primary key (id1 ASC, id2 ASC, type ASC));
 ```
 
