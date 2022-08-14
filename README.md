@@ -53,3 +53,23 @@ Ideal values for `num_threads` and `num_edges` will vary by database and by use-
 
 This command first batch reads all the keys that were inserted in the batch insert phase and then begins to run experiments. Note that the batch read phase is only run for the first experiment and can take several hours depending on the number of keys in the DB.
 Here, `num_threads` specifies the number of threads used *for batch reading, not for the experiments.* The value specified here must be less than or equal to the number of shards. 50 is the default value.
+
+## Interpreting Results
+Here's a sample result of an experiment run. These statistics are printed to
+standard output---here's a sample:
+```
+Total runtime(sec): 612.332
+Runtime excluding warmup (sec): 552.331
+Total completed operations excluding warmup: 955070
+Throughput excluding warmup: 1729.16
+Number of overtime operations excluding warmup: 958438
+Number of failed operations excluding warmup: 3378
+862657 operations; [INSERT: Count=31525 Max=212570.51 Min=3928.44 Avg=7536.34] [READ: Count=606680 Max=212879.86 Min=1483.02 Avg=2546.12] [UPDATE: Count=167828 Max=394803.53 Min=3993.65 Avg=7885.27] [READTRANSACTION: Count=53338 Max=998148.18 Min=5130.46 Avg=41861.58] [WRITETRANSACTION: Count=3286 Max=240072.81 Min=10341.05 Avg=37818.67] [WRITE: Count=199353 Max=394803.53 Min=3928.44 Avg=7830.09]
+```
+
+A few clarifications:
+
+- For throughput, each read/write/read transaction/write transaction counts as a
+  single completed operation.
+- The last line describes operation latencies in microseconds. The `WRITE`
+  operation category is an aggregate of inserts/updates/deletes.

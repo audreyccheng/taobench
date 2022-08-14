@@ -323,7 +323,7 @@ void RunTransactions(benchmark::utils::Properties & props) {
     throw std::runtime_error("Status thread is needed to clear data from warmup period.");
   }
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
-  const double warmup_period = std::stod(props.GetProperty("warmup.period", "60.0"));
+  const double warmup_period = std::stod(props.GetProperty("warmup", std::to_string(benchmark::constants::WARMUP_PERIOD)));
 
   benchmark::utils::Timer<double> timer;
   benchmark::utils::Timer<double> warmup_excluded_timer;
