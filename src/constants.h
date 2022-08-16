@@ -34,7 +34,7 @@ namespace benchmark {
     // Maximum length for experiments, in seconds. Client threads will be
     // terminated when they have hit their num_ops or when this limit is exceeded,
     // whichever is first.
-    constexpr double TIMEOUT_LIMIT_SECONDS = 60.0 * 10.2;
+    constexpr double TIMEOUT_LIMIT_SECONDS = 180.0 * 10.2;
 
     // Duration (in seconds) of the warmup period. The warmup period occurs at
     // the start of each experiment. The warmup is not included in the final
