@@ -28,9 +28,9 @@ class Exception : public std::exception {
 
 // from https://stackoverflow.com/questions/1407786/how-to-set-cpu-affinity-of-a-particular-pthread
 inline int PinThisThreadToCpu(uint32_t cpu) {
-  if (cpu >= std::thread::hardware_concurrency()) {
-    return EINVAL;
-  }
+//  if (cpu >= std::thread::hardware_concurrency()) {
+//    return EINVAL;
+//  }
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(cpu, &cpuset);

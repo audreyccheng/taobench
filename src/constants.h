@@ -18,7 +18,7 @@ namespace benchmark {
     constexpr int WRITE_BATCH_SIZE = 256;
     // Size for batch reads. Each thread reads READ_BATCH_SIZE keys per
     // database request.
-    constexpr int READ_BATCH_SIZE = 500;
+    constexpr int READ_BATCH_SIZE = 2000000;
     
     // TODO(jchan): This constant is currently unused. Its intended use is to
     // set the number of generated edges in the batch insert to be:

@@ -333,9 +333,9 @@ void RunTransactions(benchmark::utils::Properties & props) {
       throw std::invalid_argument("No experiments path provided!");
   }
 
-  if (std::thread::hardware_concurrency() == 0) {
-    throw std::runtime_error("Compiler does not support std::thread::hardware_concurrency");
-  }
+//  if (std::thread::hardware_concurrency() == 0) {
+//    throw std::runtime_error("Compiler does not support std::thread::hardware_concurrency");
+//  }
 
   for (benchmark::ExperimentInfo & experiment : experiments) {
     int num_experiment_threads = experiment.num_threads;

@@ -24,9 +24,9 @@ inline ClientThreadInfo ClientThread(benchmark::DB *db, benchmark::Workload *wl,
                         CountDownLatch *latch) {
 
   using namespace std::chrono;
-  if (utils::PinThisThreadToCpu(cpu) != 0) {
-    throw std::runtime_error("Error pinning thread to cpu" + cpu);
-  }
+//  if (utils::PinThisThreadToCpu(cpu) != 0) {
+//    throw std::runtime_error("Error pinning thread to cpu" + cpu);
+//  }
   time_point<system_clock> start = system_clock::now();
   int64_t nanos_per_op = (int64_t) (1e9 / target_throughput);
   assert(nanos_per_op > 0);
