@@ -29,7 +29,6 @@ inline ClientThreadInfo ClientThread(benchmark::DB *db, benchmark::Workload *wl,
   }
   time_point<system_clock> start = system_clock::now();
   int64_t nanos_per_op = 1;
-  assert(nanos_per_op > 0);
   utils::Timer<int64_t, std::nano> timer;
   
   // random offset for each thread so that the DB isn't hit by all threads at once

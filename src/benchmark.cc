@@ -162,6 +162,8 @@ void StatusThread(benchmark::Measurements *measurements
     if (!reset_post_warmup && elapsed_time.count() > warmup_period) {
       measurements->Reset();
       timer->Start();
+      // TODO(jchan): Resetting these counts doesn't work as intended, since
+      // the client threads aren't aware of this reset.
       OpsCounts::completed_ops = 0;
       OpsCounts::failed_ops = 0;
       OpsCounts::overtime_ops = 0;
@@ -406,10 +408,12 @@ void RunTransactions(benchmark::utils::Properties & props) {
               << exp_len << " seconds (experiment)" << std::endl;
     std::cout << "Total runtime (sec): " << runtime << std::endl;
     std::cout << "Runtime excluding warmup (sec): " << warmup_excluded_runtime << std::endl;
-    std::cout << "Total completed operations excluding warmup: " << OpsCounts::completed_ops << std::endl;
-    std::cout << "Throughput excluding warmup: " << OpsCounts::completed_ops/warmup_excluded_runtime << std::endl;
-    std::cout << "Number of overtime operations excluding warmup: " << OpsCounts::overtime_ops << std::endl;
-    std::cout << "Number of failed operations excluding warmup: " << OpsCounts::failed_ops << std::endl;
+    std::cout << "Total completed operations excluding warmup: " << measurements.GetTotalNumOps() << std::endl;
+    std::cout << "Throughput excluding warmup: " << measurements.GetTotalNumOps()/warmup_excluded_runtime << std::endl;
+    // TODO(jchan): Overtime operations aren't particularly meaningful anymore
+    // now that we've removed target throughput.
+    std::cout << "Number of overtime operations: " << OpsCounts::overtime_ops << std::endl;
+    std::cout << "Number of failed operations: " << OpsCounts::failed_ops << std::endl;
     std::cout << measurements.GetStatusMsg() << std::endl;
     std::cout << std::endl;
 
