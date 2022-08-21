@@ -19,16 +19,16 @@ struct ClientThreadInfo {
 };
 
 inline ClientThreadInfo ClientThread(benchmark::DB *db, benchmark::Workload *wl,
-                        const int num_ops, const int cpu, const double target_throughput, bool init_wl,
+                        const double exp_len, const int cpu, bool init_wl,
                         bool init_db, bool cleanup_db, bool sleep_on_wait,
                         CountDownLatch *latch) {
 
   using namespace std::chrono;
   if (utils::PinThisThreadToCpu(cpu) != 0) {
-    throw std::runtime_error("Error pinning thread to cpu" + cpu);
+    throw std::runtime_error("Error pinning thread to cpu");
   }
   time_point<system_clock> start = system_clock::now();
-  int64_t nanos_per_op = (int64_t) (1e9 / target_throughput);
+  int64_t nanos_per_op = 1;
   assert(nanos_per_op > 0);
   utils::Timer<int64_t, std::nano> timer;
   
@@ -38,7 +38,7 @@ inline ClientThreadInfo ClientThread(benchmark::DB *db, benchmark::Workload *wl,
   int oks = 0;
   int failed_ops = 0;
   int overtime_ops = 0;
-  for (int i = 0; i < num_ops; ++i) {
+  while (true) {
     timer.Start();
     bool succeeded = wl->DoRequest(*db);
     oks += succeeded;
@@ -46,7 +46,7 @@ inline ClientThreadInfo ClientThread(benchmark::DB *db, benchmark::Workload *wl,
     int64_t time_left = nanos_per_op - timer.End();
     time_point<system_clock> now = system_clock::now();
     duration<double> elapsed_time = now - start;
-    if (elapsed_time.count() > constants::TIMEOUT_LIMIT_SECONDS) {
+    if (elapsed_time.count() > exp_len) {
       break;
     }
     if (time_left < 0) {

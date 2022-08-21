@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -7,14 +8,14 @@
 namespace benchmark {
   struct ExperimentInfo {
     
-    ExperimentInfo(int threads, long ops, int throughput) 
-      : num_threads(threads), num_ops(ops), target_throughput(throughput)
+    ExperimentInfo(int threads, double warmup_len, double exp_len)
+      : num_threads(threads), warmup_len(warmup_len), exp_len(exp_len)
     {
     }
 
     int num_threads;
-    long num_ops;
-    int target_throughput;
+    double warmup_len;
+    double exp_len;
   };
 
   // Read experiments.txt file into a vector of ExperimentInfo
@@ -27,27 +28,28 @@ namespace benchmark {
           continue;
       }
       std::istringstream iss {line};
-      int num_threads = 0, target_throughput = 0;
-      long num_ops = 0;
+      int num_threads = 0;
+      double warmup_len = 0;
+      double exp_len = 0;
       for (int i = 0; i < 3; ++i) {
         std::string token;
         if (!std::getline(iss, token, ',')) {
           throw std::invalid_argument("Experiments config file is not formatted correctly; "
-            "each line must be of the format num_threads,num_ops,target_throughput.");
+            "each line must be of the format num_threads,warmup_len,exp_len.");
         }
         switch (i) {
           case 0:
             num_threads = std::stoi(token);
             break;
           case 1:
-            num_ops = std::stol(token);
+            warmup_len = std::stod(token);
             break;
           case 2:
-            target_throughput = std::stoi(token);
+            exp_len = std::stod(token);
             break;
         }
       }
-      loaded_experiments.emplace_back(num_threads, num_ops, target_throughput);
+      loaded_experiments.emplace_back(num_threads, warmup_len, exp_len);
     }
     return loaded_experiments;
   }
@@ -56,8 +58,7 @@ namespace benchmark {
     std::cout << "Inputted experiments:" << std::endl;
     for (auto const & experiment : experiments) {
       std::cout << "Running experiment: " << experiment.num_threads << " threads, " 
-        << experiment.num_ops << " operations, " << experiment.target_throughput 
-        << " ops/sec (targeted)" << std::endl;
+        << experiment.warmup_len << " seconds (warmup), " << experiment.exp_len << " seconds (experiment)" << std::endl;
     }
   }
 }

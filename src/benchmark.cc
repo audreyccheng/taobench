@@ -29,11 +29,11 @@ void UsageMessage(const char *command);
 void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties &props) {
   int argindex = 1;
   while (argindex < argc && StrStartWith(argv[argindex], "-")) {
-    if (strcmp(argv[argindex], "-threads") == 0) {
+    if (strcmp(argv[argindex], "--load-threads") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for -threads" << std::endl;
+        std::cerr << "Missing argument value for --load-threads" << std::endl;
         exit(0);
       }
       props.SetProperty("threadcount", argv[argindex]);
@@ -47,11 +47,11 @@ void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties
       }
       props.SetProperty("dbname", argv[argindex]);
       argindex++;
-    } else if (strcmp(argv[argindex], "-P") == 0) {
+    } else if (strcmp(argv[argindex], "-p") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for -P" << std::endl;
+        std::cerr << "Missing argument value for -p" << std::endl;
         exit(0);
       }
       std::string filename(argv[argindex]);
@@ -64,27 +64,27 @@ void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties
       }
       input.close();
       argindex++;
-    } else if (strcmp(argv[argindex], "-C") == 0) {
+    } else if (strcmp(argv[argindex], "-c") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for -C" << std::endl;
+        std::cerr << "Missing argument value for -c" << std::endl;
         exit(0);
       }
       props.SetProperty("config_path", argv[argindex]);
       argindex++;
-    } else if (strcmp(argv[argindex], "-p") == 0) {
+    } else if (strcmp(argv[argindex], "--property") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for -p" << std::endl;
+        std::cerr << "Missing argument value for --property" << std::endl;
         exit(0);
       }
       std::string prop(argv[argindex]);
       size_t eq = prop.find('=');
       if (eq == std::string::npos) {
-        std::cerr << "Argument '-p' expected to be in key=value format "
-                     "(e.g., -p operationcount=99999)" << std::endl;
+        std::cerr << "Argument '--property' expected to be in key=value format "
+                     "(e.g., --property operationcount=99999)" << std::endl;
         exit(0);
       }
       props.SetProperty(benchmark::utils::Trim(prop.substr(0, eq)),
@@ -102,11 +102,11 @@ void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties
       }
       props.SetProperty("num_edges", argv[argindex]);
       argindex++;
-    } else if (strcmp(argv[argindex], "-E") == 0) {
+    } else if (strcmp(argv[argindex], "-e") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument for -E (experimentfile)" << std::endl;
+        std::cerr << "Missing argument for -e (experimentfile)" << std::endl;
         exit(0);
       }
       props.SetProperty("experiment_path", argv[argindex]);
@@ -150,7 +150,7 @@ void StatusThread(benchmark::Measurements *measurements
   // warmup_period is the time (in seconds) we will omit from our measurements
   // to account for database warmup; we will reset measurements once the warmup period
   // is over. this measurement does not have to be precise, we respect the period given
-  // to the nearest interval length (default: 10s)
+  // to the nearest interval length
   using namespace std::chrono;
   time_point<system_clock> start = system_clock::now();
   bool done = false;
@@ -191,15 +191,15 @@ void UsageMessage(const char *command) {
       "  -t: run the transactions phase of the workload\n"
       "  -run: same as -t\n"
       "  -test: run test_workload\n"
-      "  -threads n: number of threads for batch inserts (load) or batch reads (run) (default: 1)\n"
+      "  --load-threads n: number of threads for batch inserts (load) or batch reads (run) (default: 1)\n"
       "  -db dbname: specify the name of the DB to use (default: basic)\n"
-      "  -P propertyfile: load properties from the given file. Multiple files can\n"
+      "  -p propertyfile: load properties from the given file. Multiple files can\n"
       "                   be specified, and will be processed in the order specified\n"
-      "  -C configfile: load workload config from the given file\n"
-      "  -E experimentfile: each line gives num_threads, num_ops, and target throughput for an experiment\n"
-      "  -p name=value: specify a property to be passed to the DB and workloads\n"
-      "                 multiple properties can be specified, and override any\n"
-      "                 values in the propertyfile\n"
+      "  -c configfile: load workload config from the given file\n"
+      "  -e experimentfile: each line gives num_threads, num_ops, and target throughput for an experiment\n"
+      "  --property name=value: specify a property to be passed to the DB and workloads\n"
+      "                         multiple properties can be specified, and override any\n"
+      "                         values in the propertyfile\n"
       "  -s: print status every 10 seconds (use status.interval prop to override)\n"
       "  -n: number of edges in keypool (default: 165 million) to batch insert\n"
       "  -spin: spin on waits rather than sleeping"
@@ -292,8 +292,6 @@ void RunTransactions(benchmark::utils::Properties & props) {
   std::vector<std::future<int>> batch_read_threads;
 
   for (int i = 0; i < num_threads; i++) {
-    // int start = i * 64512 / num_threads;
-    // int end = (i + 1) * 64512 / num_threads;
     batch_read_threads.emplace_back(std::async(
       std::launch::async,
       benchmark::BatchReadThread,
@@ -323,7 +321,6 @@ void RunTransactions(benchmark::utils::Properties & props) {
     throw std::runtime_error("Status thread is needed to clear data from warmup period.");
   }
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
-  const double warmup_period = std::stod(props.GetProperty("warmup", std::to_string(benchmark::constants::WARMUP_PERIOD)));
 
   benchmark::utils::Timer<double> timer;
   benchmark::utils::Timer<double> warmup_excluded_timer;
@@ -339,14 +336,10 @@ void RunTransactions(benchmark::utils::Properties & props) {
 
   for (benchmark::ExperimentInfo & experiment : experiments) {
     int num_experiment_threads = experiment.num_threads;
-    long num_experiment_ops = experiment.num_ops;
-    int target_throughput = experiment.target_throughput;
-    int target_throughput_per_thread = target_throughput / num_experiment_threads;
-    if (target_throughput_per_thread <= 0) {
-      target_throughput_per_thread = 1;
-    }
+    double exp_len = experiment.exp_len;
+    double warmup_len = experiment.warmup_len;
     std::cout << "Running experiment: " << num_experiment_threads << " threads, " <<
-      num_experiment_ops << " operations, " << target_throughput << " ops/sec (targeted)" << std::endl;
+      warmup_len << " seconds (warmup), " << exp_len << " seconds (experiment)" << std::endl;
 
     std::vector<benchmark::DB *> experiment_dbs;
     for (int i = 0; i < num_experiment_threads; i++) {
@@ -373,24 +366,18 @@ void RunTransactions(benchmark::utils::Properties & props) {
     // launch status update thread
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                  &measurements, &latch, status_interval, warmup_period,
+                                  &measurements, &latch, status_interval, warmup_len,
                                   &warmup_excluded_timer);
     }
 
     std::vector<std::future<benchmark::ClientThreadInfo>> client_threads;
     for (int i = 0; i < num_experiment_threads; ++i) {
-      int thread_ops = num_experiment_ops / num_experiment_threads;
-      if (i < num_experiment_ops % num_experiment_threads) {
-        thread_ops++;
-      }
-
       client_threads.emplace_back(std::async(
         std::launch::async,
         benchmark::ClientThread, experiment_dbs[i],
         &wl,
-        thread_ops,
+        exp_len,
         i % std::thread::hardware_concurrency(),
-        target_throughput_per_thread,
         false, // initialize workload, not used rn
         false, // initialize db, we're doing this in CreateDB
         false,  // cleanup db, we do it separately
@@ -414,9 +401,10 @@ void RunTransactions(benchmark::utils::Properties & props) {
       status_future.wait();
     }
 
-    std::cout << "Experiment description: " << num_experiment_threads << " threads, " << 
-      num_experiment_ops << " operations, " << target_throughput << " ops/sec (targeted)" << std::endl;
-    std::cout << "Total runtime(sec): " << runtime << std::endl;
+    std::cout << "Experiment description: " << num_experiment_threads
+              << " threads, " << warmup_len << " seconds (warmup), "
+              << exp_len << " seconds (experiment)" << std::endl;
+    std::cout << "Total runtime (sec): " << runtime << std::endl;
     std::cout << "Runtime excluding warmup (sec): " << warmup_excluded_runtime << std::endl;
     std::cout << "Total completed operations excluding warmup: " << OpsCounts::completed_ops << std::endl;
     std::cout << "Throughput excluding warmup: " << OpsCounts::completed_ops/warmup_excluded_runtime << std::endl;

@@ -33,12 +33,10 @@ First, create a database using `CREATE DATABASE <name>`, and access it with
 
 Then, create an `objects` and an `edges` table with the following schemas:
 ```sql
-DROP TABLE IF EXISTS objects;
 CREATE TABLE objects(
     id BIGINT PRIMARY KEY,
     timestamp BIGINT,
     value VARCHAR(150));
-DROP TABLE IF EXISTS edges;
 CREATE TABLE edges(
     id1 BIGINT,
     id2 BIGINT,

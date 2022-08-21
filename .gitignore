@@ -38,7 +38,7 @@
 **/CMakeFiles/
 **/CTestTestfile.cmake
 **/Makefile
-**/benchmark
+**/taobench
 **/*.cbp
 **/CMakeScripts
 **/compile_commands.json
