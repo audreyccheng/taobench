@@ -10,10 +10,6 @@
 #include "db.h"
 #include "timer.h"
 #include "properties.h"
-// #include "generator.h"
-// #include "discrete_generator.h"
-// #include "counter_generator.h"
-// #include "acknowledged_counter_generator.h"
 #include "utils.h"
 #include "parse_config.h"
 #include "workload_loader.h"
@@ -71,7 +67,7 @@ private:
 
 public:
 
-  int LoadRow(WorkloadLoader &loader);
+  int LoadRow(WorkloadLoader &loader, int write_batch_size);
 
   static int64_t GetShardStartKey(int spreader);
   

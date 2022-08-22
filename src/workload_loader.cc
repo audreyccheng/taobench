@@ -18,7 +18,8 @@ namespace benchmark {
                                      int64_t remote_key,
                                      EdgeType edge_type,
                                      int64_t timestamp,
-                                     std::string const & value)
+                                     std::string const & value,
+                                     int write_batch_size)
   {
     int failed_ops = 0;
     shard_to_edges[primary_shard].emplace_back(primary_key, remote_key, edge_type);
@@ -28,10 +29,10 @@ namespace benchmark {
     object_key_buffer.push_back({{"id", remote_key}});
     object_value_buffer.emplace_back(timestamp, value);
     object_value_buffer.emplace_back(timestamp, value);
-    if (edge_value_buffer.size() > constants::WRITE_BATCH_SIZE) {
+    if (edge_value_buffer.size() > write_batch_size) {
       failed_ops += FlushEdgeBuffer();
     }
-    if (object_value_buffer.size() > constants::WRITE_BATCH_SIZE) {
+    if (object_value_buffer.size() > write_batch_size) {
       failed_ops += FlushObjectBuffer();
     }
     return failed_ops;
@@ -62,7 +63,7 @@ namespace benchmark {
     return id >> 57;
   }
 
-  int WorkloadLoader::BatchRead() {
+  int WorkloadLoader::BatchRead(int read_batch_size) {
     int failed_ops = 0;
     int num_read_by_thread = 0;
     // Note that the key mapped to id2 is just some placeholder value, the key
@@ -79,7 +80,7 @@ namespace benchmark {
         if (!is_first) { 
           throw std::runtime_error("Terminal: Batch read failure. DB driver should instead retry until success");
         }
-        db_.BatchRead(DataTable::Edges, floor, ceiling, constants::READ_BATCH_SIZE, read_buffer);
+        db_.BatchRead(DataTable::Edges, floor, ceiling, read_batch_size, read_buffer);
         is_first = false;
       } else {
         assert(last_read.size() == 3);
@@ -87,7 +88,7 @@ namespace benchmark {
         assert(last_read[1].name == "id2");
         assert(last_read[2].name == "type");
         if (db_.BatchRead(DataTable::Edges, last_read, ceiling, 
-              constants::READ_BATCH_SIZE, read_buffer) != Status::kOK) {
+              read_batch_size, read_buffer) != Status::kOK) {
           throw std::runtime_error("Terminal: Batch read failure. DB driver should instead retry until success. Also valid empty scans should return Status::kOK.");
         }
       }

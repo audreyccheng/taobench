@@ -23,13 +23,14 @@ namespace benchmark {
                        int64_t remote_key,
                        EdgeType edge_type,
                        int64_t timestamp,
-                       std::string const & value);
+                       std::string const & value,
+                       int write_batch_size);
 
     bool FlushEdgeBuffer();
 
     bool FlushObjectBuffer();
 
-    int BatchRead();
+    int BatchRead(int read_batch_size);
 
     // This is a map of all the edges from a batch read.
     std::unordered_map<int, std::vector<Edge>> shard_to_edges;

@@ -37,10 +37,6 @@ Specifically,
   the amount of time spent running the workload without taking measurements
 - `exp_len` specifies the length in seconds of the experiment
 
-### `src/constants.h`
-
-Other benchmark-level attributes can be tweaked in this file. In particular, different values of READ_BATCH_SIZE and WRITE_BATCH_SIZE might improve performance for batch inserts and batch reads.
-
 ## Prepping the Database
 
 This phase populates the DB tables with an initial set of edges and objects. We batch insert data into the DB and batch read them into memory to be used when running experiments. To run the batch insert phase, use the following command:

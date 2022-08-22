@@ -297,7 +297,8 @@ void RunTransactions(benchmark::utils::Properties & props) {
     batch_read_threads.emplace_back(std::async(
       std::launch::async,
       benchmark::BatchReadThread,
-      loaders[i]
+      loaders[i],
+      std::stoi(props.GetProperty("read_batch_size", std::to_string(benchmark::constants::READ_BATCH_SIZE)))
     ));
   }
 
@@ -463,7 +464,8 @@ void RunBatchInsert(benchmark::utils::Properties & props) {
       benchmark::BatchInsertThread,
       loaders[i],
       &wl,
-      i >= total_keys % num_threads ? num_keys_per_thread : num_keys_per_thread + 1
+      i >= total_keys % num_threads ? num_keys_per_thread : num_keys_per_thread + 1,
+      std::stoi(props.GetProperty("write_batch_size", std::to_string(benchmark::constants::WRITE_BATCH_SIZE)))
     ));
   }
 

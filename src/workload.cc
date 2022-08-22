@@ -127,7 +127,7 @@ namespace benchmark {
   }
 
   // This function is used in the batch insert phase to generate an edge with new primary and remote keys.
-  int TraceGeneratorWorkload::LoadRow(WorkloadLoader &loader) {
+  int TraceGeneratorWorkload::LoadRow(WorkloadLoader &loader, int write_batch_size) {
     std::uniform_int_distribution<> unif(0, constants::NUM_SHARDS-1);
     ConfigParser::LineObject & remote_shards = config_parser.fields["remote_shards"];
     int primary_shard = unif(rnd::gen);
@@ -137,7 +137,7 @@ namespace benchmark {
     EdgeType edge_type = GetRandomEdgeType();
     int64_t timestamp = utils::CurrentTimeNanos();
     std::string value = GetValue();
-    return loader.WriteToBuffers(primary_shard, primary_key, remote_key, edge_type, timestamp, value);
+    return loader.WriteToBuffers(primary_shard, primary_key, remote_key, edge_type, timestamp, value, write_batch_size);
   }
 
   void TraceGeneratorWorkload::ResizeShardWeights(int n_shards) {
