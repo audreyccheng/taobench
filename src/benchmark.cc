@@ -29,11 +29,11 @@ void UsageMessage(const char *command);
 void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties &props) {
   int argindex = 1;
   while (argindex < argc && StrStartWith(argv[argindex], "-")) {
-    if (strcmp(argv[argindex], "--load-threads") == 0) {
+    if (strcmp(argv[argindex], "-load-threads") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for --load-threads" << std::endl;
+        std::cerr << "Missing argument value for -load-threads" << std::endl;
         exit(0);
       }
       props.SetProperty("threadcount", argv[argindex]);
@@ -73,18 +73,18 @@ void ParseCommandLine(int argc, const char *argv[], benchmark::utils::Properties
       }
       props.SetProperty("config_path", argv[argindex]);
       argindex++;
-    } else if (strcmp(argv[argindex], "--property") == 0) {
+    } else if (strcmp(argv[argindex], "-property") == 0) {
       argindex++;
       if (argindex >= argc) {
         UsageMessage(argv[0]);
-        std::cerr << "Missing argument value for --property" << std::endl;
+        std::cerr << "Missing argument value for -property" << std::endl;
         exit(0);
       }
       std::string prop(argv[argindex]);
       size_t eq = prop.find('=');
       if (eq == std::string::npos) {
-        std::cerr << "Argument '--property' expected to be in key=value format "
-                     "(e.g., --property operationcount=99999)" << std::endl;
+        std::cerr << "Argument '-property' expected to be in key=value format "
+                     "(e.g., -property operationcount=99999)" << std::endl;
         exit(0);
       }
       props.SetProperty(benchmark::utils::Trim(prop.substr(0, eq)),
@@ -193,13 +193,13 @@ void UsageMessage(const char *command) {
       "  -t: run the transactions phase of the workload\n"
       "  -run: same as -t\n"
       "  -test: run test_workload\n"
-      "  --load-threads n: number of threads for batch inserts (load) or batch reads (run) (default: 1)\n"
+      "  -load-threads n: number of threads for batch inserts (load) or batch reads (run) (default: 1)\n"
       "  -db dbname: specify the name of the DB to use (default: basic)\n"
       "  -p propertyfile: load properties from the given file. Multiple files can\n"
       "                   be specified, and will be processed in the order specified\n"
       "  -c configfile: load workload config from the given file\n"
       "  -e experimentfile: each line gives num_threads, num_ops, and target throughput for an experiment\n"
-      "  --property name=value: specify a property to be passed to the DB and workloads\n"
+      "  -property name=value: specify a property to be passed to the DB and workloads\n"
       "                         multiple properties can be specified, and override any\n"
       "                         values in the propertyfile\n"
       "  -s: print status every 10 seconds (use status.interval prop to override)\n"
