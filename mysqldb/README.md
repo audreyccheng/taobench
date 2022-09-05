@@ -1,37 +1,34 @@
-# MySQL
+# PlanetScale / TiDB (MySQL)
 
-## Building TAOBench with MySQL
-You will need a distribution of `cmake` and `g++-11` to build TAOBench. Additionally, the MySQL driver relies on
+## Dependencies
+The MySQL driver relies on
 
 1. MySQL C API development files (libmysqlclient-dev) for MySQL version 5.7.
    Currently, our benchmark driver doesn't support the MySQL 8.0 protocol.
 2. A [C++ wrapper](https://github.com/seznam/SuperiorMySqlpp) for the MySQL C API.
 
-On Ubuntu 18.04:
-```
-# TAOBench essentials
-apt-get update
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:ubuntu-toolchain-r/test
-apt-get install -y build-essential cmake g++-11
+<details>
+<summary>Example: Ubuntu 18.04</summary>
 
-# MySQL requirements
+```shell
+# MySQL C API
 apt-get install -y libmysqlclient-dev
+
+# C++ wrapper
 git clone https://github.com/seznam/SuperiorMySqlpp
 cp -Rf SuperiorMySqlpp/include/* /usr/include
 ```
+</details>
 
-Modify the include directory for SuperiorMySqlpp in `CMakeLists.txt` to the download location, if necessary. Then build the benchmark.
-```
+Modify the include directory for SuperiorMySqlpp in `CMakeLists.txt` to the
+download location, if necessary. Then build the benchmark.
+```shell
 cmake . -DWITH_MYSQL=ON
 make
 ```
 
-## Configuring TAOBench with MySQL
-First, create a database using `CREATE DATABASE <name>`, and access it with
-`USE <name>`.
-
-Then, create an `objects` and an `edges` table with the following schemas:
+## Setting up MySQL
+Create an `objects` and an `edges` table with the following schemas:
 ```sql
 CREATE TABLE objects(
     id BIGINT PRIMARY KEY,
@@ -46,7 +43,11 @@ CREATE TABLE edges(
     PRIMARY KEY CLUSTERED (id1, id2, type));
 ```
 
-Configure your MySQL connection by filling the fields in `mysqldb/mysql_db.properties`:
+Configure your MySQL connection by filling the fields in `mysqldb/mysql_db.properties`.
+
+<details>
+<summary>Properties</summary>
+
 ```
 mysqldb.dbname=
 mysqldb.url=
@@ -54,10 +55,11 @@ mysqldb.username=
 mysqldb.password=
 mysqldb.dbport=
 ```
+</details>
 
 ## Creating a Cluster
-Both TiDB and PlanetScale are MySQL compatible databases and have been
-successfully used to run TAOBench.
+TiDB and PlanetScale are MySQL-compatible databases, and TAOBench has been
+run on both.
 
 ### TiDB
 Navigate to the [TiDB Cloud page](https://tidbcloud.com/console/clusters), and use the "Create Cluster" tool to create a cluster. Obtain connection details by following [these instructions](https://docs.pingcap.com/tidbcloud/connect-to-tidb-cluster).
